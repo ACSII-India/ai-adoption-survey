@@ -5,7 +5,7 @@ services:
     name: ai-adoption-survey
     runtime: node
     region: singapore
-    plan: starter            # free plan sleeps when idle and drops in-memory sessions
+    plan: free               # sleeps after ~15 min idle; restart drops in-memory sessions and email codes. Use starter for go-live.
     buildCommand: npm ci --omit=dev
     startCommand: npm start
     healthCheckPath: /healthz
