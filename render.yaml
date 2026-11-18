@@ -1,0 +1,55 @@
+# Render Blueprint: https://render.com/docs/blueprint-spec
+# Keep to ONE instance: sessions, email codes and the Excel write queue live in memory.
+services:
+  - type: web
+    name: ai-adoption-survey
+    runtime: node
+    region: singapore
+    plan: starter            # free plan sleeps when idle and drops in-memory sessions
+    buildCommand: npm ci --omit=dev
+    startCommand: npm start
+    healthCheckPath: /healthz
+    autoDeploy: true
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: NODE_ENV
+        value: production
+      - key: BASE_URL                 # e.g. https://ai-adoption-survey.onrender.com (must match Entra redirect URI)
+        sync: false
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: ENTRA_TENANT_ID
+        sync: false
+      - key: ENTRA_CLIENT_ID
+        sync: false
+      - key: ENTRA_CLIENT_SECRET
+        sync: false
+      - key: ADMIN_APP_ROLE
+        value: Survey.Admin
+      - key: REVIEWER_APP_ROLE
+        value: Survey.Reviewer
+      - key: EXCEL_DRIVE_ID
+        sync: false
+      - key: EXCEL_ITEM_ID
+        sync: false
+      - key: MAIL_SENDER
+        sync: false
+      - key: ENABLE_RESULTS_EMAIL
+        value: "true"
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: ANTHROPIC_MODEL
+        value: claude-sonnet-5-5
+      - key: CYCLE_NAME
+        value: Baseline 2026
+      - key: ALLOW_RESUBMIT
+        value: "false"
+      - key: ALLOWED_EMAIL_DOMAINS
+        sync: false
+      - key: REQUIRE_EMAIL_CODE
+        value: "true"
+      - key: LEVEL_THRESHOLD
+        value: "0.6"
+      - key: MET_SCORE
+        value: "3"
