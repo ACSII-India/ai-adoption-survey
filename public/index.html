@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI adoption check-in</title>
+<link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+<header class="top">
+  <div class="bar">
+    <div class="title">AI adoption check-in<small id="sub">Self-assessment</small></div>
+    <div class="ladder" id="ladder" aria-hidden="true"></div>
+    <div class="ladder-lbl" id="ladderLbl" aria-live="polite">Level not yet set</div>
+  </div>
+  <div class="prog"><i id="prog"></i></div>
+</header>
+<main>
+  <div id="notice"></div>
+  <div class="chat" id="chat" aria-live="polite"></div>
+  <div id="input"><p class="thinking">Loading the check-in…</p></div>
+</main>
+<script src="/scoring.js"></script>
+<script src="/app.js"></script>
+</body>
+</html>

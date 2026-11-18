@@ -1,0 +1,1002 @@
+{
+ "levels": [
+  {
+   "level": 1,
+   "name": "Aware",
+   "definition": "Has access to approved AI tools and knows what they are for; no regular use yet"
+  },
+  {
+   "level": 2,
+   "name": "Exploring",
+   "definition": "Uses AI occasionally for isolated, low-risk tasks"
+  },
+  {
+   "level": 3,
+   "name": "Practicing",
+   "definition": "Uses AI weekly on a recurring set of core role tasks and verifies output"
+  },
+  {
+   "level": 4,
+   "name": "Proficient",
+   "definition": "Uses AI daily across most core tasks, with deliberate prompting, context files, and reusable patterns"
+  },
+  {
+   "level": 5,
+   "name": "Advanced",
+   "definition": "Runs multi-step and agentic workflows, connects AI to tools and data, and delegates scoped work to agents"
+  },
+  {
+   "level": 6,
+   "name": "Multiplier",
+   "definition": "Builds shared AI assets others use, sets practices and guardrails, coaches others"
+  },
+  {
+   "level": 7,
+   "name": "Transformer",
+   "definition": "Redesigns a process or role end to end around AI and builds organization-wide capability"
+  }
+ ],
+ "scales": {
+  "1": [
+   "No access, and not familiar with the approved AI tools",
+   "Familiar with the approved tools, but no access yet",
+   "Have access, not yet used",
+   "Have access and have tried the tools",
+   "Have access, set up, and familiar with the AI usage policy"
+  ],
+  "2": [
+   "Never",
+   "Tried once or twice",
+   "A few times a month",
+   "Weekly",
+   "Daily, as part of most tasks"
+  ],
+  "3": [
+   "Never",
+   "Tried once or twice",
+   "A few times a month",
+   "Weekly",
+   "Daily, as part of most tasks"
+  ],
+  "4": [
+   "Never",
+   "Tried once or twice",
+   "A few times a month",
+   "Weekly",
+   "Daily, as part of most tasks"
+  ],
+  "5": [
+   "Not done",
+   "Tried once, needed heavy rework",
+   "Done a few times, with close review",
+   "Do it regularly, with a verification step",
+   "Routine, using reusable commands, connectors, or workflows"
+  ],
+  "6": [
+   "Not done",
+   "Exploring or planning it",
+   "Created it, used only by me so far",
+   "Shared it, and at least 2 colleagues use it",
+   "Adopted as a team standard or practice"
+  ],
+  "7": [
+   "Not done",
+   "Proposed the idea",
+   "Piloting it in my team",
+   "Adopted by my team, with measured results",
+   "Adopted beyond my team or organization-wide, with measured results"
+  ]
+ },
+ "questionnaires": {
+  "DEV": {
+   "name": "Developer",
+   "questions": [
+    {
+     "id": "DEV-R01",
+     "level": 1,
+     "useCase": "AI coding tool access",
+     "text": "Which best describes your access to AI coding tools (Claude Code, GitHub Copilot, Devin)?"
+    },
+    {
+     "id": "DEV-R02",
+     "level": 2,
+     "useCase": "Explaining code and errors",
+     "text": "How often do you ask AI to explain code, errors, or technical concepts?"
+    },
+    {
+     "id": "DEV-R03",
+     "level": 2,
+     "useCase": "Snippets and one-off scripts",
+     "text": "How often do you use AI to write small snippets, regular expressions, or one-off scripts?"
+    },
+    {
+     "id": "DEV-R04",
+     "level": 3,
+     "useCase": "Writing unit tests",
+     "text": "How often do you generate unit tests with AI and verify them before committing?"
+    },
+    {
+     "id": "DEV-R05",
+     "level": 3,
+     "useCase": "Refactoring",
+     "text": "How often do you refactor code with AI assistance and review every diff?"
+    },
+    {
+     "id": "DEV-R06",
+     "level": 3,
+     "useCase": "Code documentation",
+     "text": "How often do you write comments, docstrings, or README content with AI?"
+    },
+    {
+     "id": "DEV-R07",
+     "level": 3,
+     "useCase": "Debugging",
+     "text": "How often do you use AI to debug failures or analyze stack traces?"
+    },
+    {
+     "id": "DEV-R08",
+     "level": 4,
+     "useCase": "End-to-end feature work",
+     "text": "How often do you build features end to end in Claude Code or a similar AI coding agent?"
+    },
+    {
+     "id": "DEV-R09",
+     "level": 4,
+     "useCase": "Project context files",
+     "text": "How often do you maintain project context files (for example CLAUDE.md) so AI follows your codebase conventions?"
+    },
+    {
+     "id": "DEV-R10",
+     "level": 4,
+     "useCase": "AI self-review of pull requests",
+     "text": "How often do you run an AI review of your own pull request before requesting human review?"
+    },
+    {
+     "id": "DEV-R11",
+     "level": 4,
+     "useCase": "Upgrades and migrations",
+     "text": "How often do you use AI for dependency upgrades, API migrations, or code modernization?"
+    },
+    {
+     "id": "DEV-R12",
+     "level": 5,
+     "useCase": "Delegating tickets to agents",
+     "text": "Which best describes how you delegate scoped tickets to an agent (Devin or a Claude Code agent) and review the result?"
+    },
+    {
+     "id": "DEV-R13",
+     "level": 5,
+     "useCase": "Multi-file agentic changes",
+     "text": "Which best describes your use of multi-file, agentic changes across a repository?"
+    },
+    {
+     "id": "DEV-R14",
+     "level": 5,
+     "useCase": "Custom commands and hooks",
+     "text": "Which best describes your use of custom commands, hooks, or reusable prompts in your AI coding tool?"
+    },
+    {
+     "id": "DEV-R15",
+     "level": 5,
+     "useCase": "Tool integrations (MCP)",
+     "text": "Which best describes how you connect AI tools to other systems (Jira, Confluence, databases) through MCP servers or integrations?"
+    },
+    {
+     "id": "DEV-R16",
+     "level": 6,
+     "useCase": "Standards for AI-written code",
+     "text": "Which best describes your contribution to team standards for reviewing AI-generated code?"
+    },
+    {
+     "id": "DEV-R17",
+     "level": 6,
+     "useCase": "Shared prompt and command library",
+     "text": "Which best describes a shared library of prompts, commands, or context files that you created?"
+    },
+    {
+     "id": "DEV-R18",
+     "level": 6,
+     "useCase": "Coaching on AI development",
+     "text": "Which best describes guides, demos, or pairing sessions you created to help colleagues with AI-assisted development?"
+    },
+    {
+     "id": "DEV-R19",
+     "level": 7,
+     "useCase": "Agents in CI/CD",
+     "text": "Which best describes AI agents running in your CI/CD pipeline (for example automated review, test generation, or fixes)?"
+    },
+    {
+     "id": "DEV-R20",
+     "level": 7,
+     "useCase": "Eval harnesses and MCP servers",
+     "text": "Which best describes evaluation harnesses or custom MCP servers you built for AI-assisted development?"
+    }
+   ]
+  },
+  "QA": {
+   "name": "QA/SDET",
+   "questions": [
+    {
+     "id": "QA-R01",
+     "level": 1,
+     "useCase": "AI tool access for testing",
+     "text": "Which best describes your access to AI tools for testing (Claude Code, GitHub Copilot, Devin, or an approved chat assistant)?"
+    },
+    {
+     "id": "QA-R02",
+     "level": 2,
+     "useCase": "Explaining features and defects",
+     "text": "How often do you ask AI to explain a feature, requirement, or defect?"
+    },
+    {
+     "id": "QA-R03",
+     "level": 2,
+     "useCase": "Drafting single test cases",
+     "text": "How often do you use AI to draft individual test cases?"
+    },
+    {
+     "id": "QA-R04",
+     "level": 3,
+     "useCase": "Test cases from stories",
+     "text": "How often do you generate test cases from user stories or acceptance criteria with AI?"
+    },
+    {
+     "id": "QA-R05",
+     "level": 3,
+     "useCase": "Test data generation",
+     "text": "How often do you generate test data with AI?"
+    },
+    {
+     "id": "QA-R06",
+     "level": 3,
+     "useCase": "Requirement testability review",
+     "text": "How often do you use AI to review requirements for testability gaps or ambiguity?"
+    },
+    {
+     "id": "QA-R07",
+     "level": 3,
+     "useCase": "Defect reports",
+     "text": "How often do you write defect reports with AI assistance?"
+    },
+    {
+     "id": "QA-R08",
+     "level": 4,
+     "useCase": "Automation script generation",
+     "text": "How often do you generate or update automation scripts (for example Playwright, Selenium, or API tests) with AI?"
+    },
+    {
+     "id": "QA-R09",
+     "level": 4,
+     "useCase": "Regression selection",
+     "text": "How often do you use AI to select or prioritize regression tests for a change?"
+    },
+    {
+     "id": "QA-R10",
+     "level": 4,
+     "useCase": "Failure and log analysis",
+     "text": "How often do you analyze failed test runs or logs with AI to find the root cause?"
+    },
+    {
+     "id": "QA-R11",
+     "level": 4,
+     "useCase": "Coverage analysis",
+     "text": "How often do you use AI to check test coverage against requirements?"
+    },
+    {
+     "id": "QA-R12",
+     "level": 5,
+     "useCase": "Tests from pull request changes",
+     "text": "Which best describes how agents generate or update tests directly from pull request changes?"
+    },
+    {
+     "id": "QA-R13",
+     "level": 5,
+     "useCase": "Self-healing test scripts",
+     "text": "Which best describes your use of self-healing or AI-maintained test scripts?"
+    },
+    {
+     "id": "QA-R14",
+     "level": 5,
+     "useCase": "AI-led exploratory testing",
+     "text": "Which best describes AI-led exploratory testing (charters, risk-based scenarios) in your work?"
+    },
+    {
+     "id": "QA-R15",
+     "level": 5,
+     "useCase": "Test tool integrations",
+     "text": "Which best describes how you connect AI tools to test management or defect systems (for example Jira or Xray)?"
+    },
+    {
+     "id": "QA-R16",
+     "level": 6,
+     "useCase": "Quality gates for AI code",
+     "text": "Which best describes quality gates you defined for AI-generated code?"
+    },
+    {
+     "id": "QA-R17",
+     "level": 6,
+     "useCase": "Shared prompt pack for testers",
+     "text": "Which best describes a shared prompt pack or template set for testers that you created?"
+    },
+    {
+     "id": "QA-R18",
+     "level": 6,
+     "useCase": "Team AI test strategy",
+     "text": "Which best describes the AI testing strategy you defined for your team?"
+    },
+    {
+     "id": "QA-R19",
+     "level": 7,
+     "useCase": "Autonomous testing pipeline",
+     "text": "Which best describes an autonomous testing pipeline (generation, execution, and triage by agents with human approval)?"
+    },
+    {
+     "id": "QA-R20",
+     "level": 7,
+     "useCase": "Evaluation of AI features",
+     "text": "Which best describes evaluation practices for AI or LLM features (accuracy, safety, regressions) that you established?"
+    }
+   ]
+  },
+  "TL": {
+   "name": "Tech Lead",
+   "questions": [
+    {
+     "id": "TL-R01",
+     "level": 1,
+     "useCase": "AI tool access and policy",
+     "text": "Which best describes your access to AI tools and your knowledge of the team AI usage policy?"
+    },
+    {
+     "id": "TL-R02",
+     "level": 2,
+     "useCase": "Design questions and research",
+     "text": "How often do you use AI for design questions or technical research?"
+    },
+    {
+     "id": "TL-R03",
+     "level": 2,
+     "useCase": "Emails and updates",
+     "text": "How often do you draft emails, updates, or meeting notes with AI?"
+    },
+    {
+     "id": "TL-R04",
+     "level": 3,
+     "useCase": "Story breakdown",
+     "text": "How often do you break epics into stories or tasks with AI?"
+    },
+    {
+     "id": "TL-R05",
+     "level": 3,
+     "useCase": "Estimation input",
+     "text": "How often do you use AI for estimation input or sizing?"
+    },
+    {
+     "id": "TL-R06",
+     "level": 3,
+     "useCase": "Review summaries",
+     "text": "How often do you summarize pull requests or code reviews with AI?"
+    },
+    {
+     "id": "TL-R07",
+     "level": 3,
+     "useCase": "Option and trade-off prep",
+     "text": "How often do you use AI to prepare options and trade-offs for technical discussions?"
+    },
+    {
+     "id": "TL-R08",
+     "level": 4,
+     "useCase": "Design spikes with agents",
+     "text": "How often do you run design spikes or prototypes with an AI coding agent?"
+    },
+    {
+     "id": "TL-R09",
+     "level": 4,
+     "useCase": "AI-assisted PR review",
+     "text": "How often do you use AI to review pull requests before or alongside human review?"
+    },
+    {
+     "id": "TL-R10",
+     "level": 4,
+     "useCase": "Technical debt analysis",
+     "text": "How often do you analyze technical debt or code health with AI?"
+    },
+    {
+     "id": "TL-R11",
+     "level": 4,
+     "useCase": "Team AI norms",
+     "text": "How often do you reinforce team norms for AI use in reviews, standups, or retrospectives?"
+    },
+    {
+     "id": "TL-R12",
+     "level": 5,
+     "useCase": "Splitting work with agents",
+     "text": "Which best describes how you split delivery work between people and agents (Devin, Claude Code)?"
+    },
+    {
+     "id": "TL-R13",
+     "level": 5,
+     "useCase": "Reviewing agent output at scale",
+     "text": "Which best describes how you review agent-generated work at scale?"
+    },
+    {
+     "id": "TL-R14",
+     "level": 5,
+     "useCase": "Connected planning workflows",
+     "text": "Which best describes AI workflows connected to Jira, Confluence, or the repository for planning and tracking?"
+    },
+    {
+     "id": "TL-R15",
+     "level": 5,
+     "useCase": "Delivery metrics analysis",
+     "text": "Which best describes your use of AI to analyze delivery metrics (cycle time, PR throughput, defects)?"
+    },
+    {
+     "id": "TL-R16",
+     "level": 6,
+     "useCase": "Team AI delivery model",
+     "text": "Which best describes the AI delivery model and metrics you own for your team?"
+    },
+    {
+     "id": "TL-R17",
+     "level": 6,
+     "useCase": "AI onboarding and pairing",
+     "text": "Which best describes AI onboarding and pairing you set up for team members?"
+    },
+    {
+     "id": "TL-R18",
+     "level": 6,
+     "useCase": "Team AI playbook",
+     "text": "Which best describes a team AI playbook (practices, prompts, review rules) that you created?"
+    },
+    {
+     "id": "TL-R19",
+     "level": 7,
+     "useCase": "Team redesigned around agents",
+     "text": "Which best describes team structure or roles redesigned around AI agents?"
+    },
+    {
+     "id": "TL-R20",
+     "level": 7,
+     "useCase": "Patterns adopted by other teams",
+     "text": "Which best describes AI delivery patterns from your team adopted by other teams?"
+    }
+   ]
+  },
+  "ARC": {
+   "name": "Architect",
+   "questions": [
+    {
+     "id": "ARC-R01",
+     "level": 1,
+     "useCase": "AI tool access and guardrails",
+     "text": "Which best describes your access to AI tools and your knowledge of AI policy and guardrails?"
+    },
+    {
+     "id": "ARC-R02",
+     "level": 2,
+     "useCase": "Explaining patterns and products",
+     "text": "How often do you ask AI to explain patterns, technologies, or vendor products?"
+    },
+    {
+     "id": "ARC-R03",
+     "level": 2,
+     "useCase": "Summarizing documents",
+     "text": "How often do you use AI to summarize documents, standards, or RFPs?"
+    },
+    {
+     "id": "ARC-R04",
+     "level": 3,
+     "useCase": "Drafting ADRs",
+     "text": "How often do you draft ADRs or decision records with AI?"
+    },
+    {
+     "id": "ARC-R05",
+     "level": 3,
+     "useCase": "Option analyses",
+     "text": "How often do you produce option analyses or trade-off comparisons with AI?"
+    },
+    {
+     "id": "ARC-R06",
+     "level": 3,
+     "useCase": "Diagrams as code",
+     "text": "How often do you create diagrams as code (for example Mermaid or PlantUML) with AI?"
+    },
+    {
+     "id": "ARC-R07",
+     "level": 3,
+     "useCase": "Architecture documents",
+     "text": "How often do you draft architecture or solution documents with AI?"
+    },
+    {
+     "id": "ARC-R08",
+     "level": 4,
+     "useCase": "Standards reviews",
+     "text": "How often do you review designs against standards and principles with AI?"
+    },
+    {
+     "id": "ARC-R09",
+     "level": 4,
+     "useCase": "NFR analysis",
+     "text": "How often do you analyze non-functional requirements (security, performance, cost) with AI?"
+    },
+    {
+     "id": "ARC-R10",
+     "level": 4,
+     "useCase": "Codebase analysis",
+     "text": "How often do you analyze codebases or repositories with Claude Code to understand the current architecture?"
+    },
+    {
+     "id": "ARC-R11",
+     "level": 4,
+     "useCase": "Landscape analysis",
+     "text": "How often do you use AI for application or technology landscape analysis (for example from LeanIX exports)?"
+    },
+    {
+     "id": "ARC-R12",
+     "level": 5,
+     "useCase": "Automated conformance checks",
+     "text": "Which best describes automated architecture conformance checks with AI?"
+    },
+    {
+     "id": "ARC-R13",
+     "level": 5,
+     "useCase": "Impact analysis with agents",
+     "text": "Which best describes repository-wide or cross-system impact analysis with an AI agent?"
+    },
+    {
+     "id": "ARC-R14",
+     "level": 5,
+     "useCase": "EA tool integration",
+     "text": "Which best describes AI integration with the EA tool or Confluence through MCP or APIs?"
+    },
+    {
+     "id": "ARC-R15",
+     "level": 5,
+     "useCase": "AI-assisted threat modeling",
+     "text": "Which best describes AI-assisted threat modeling or risk assessment in your work?"
+    },
+    {
+     "id": "ARC-R16",
+     "level": 6,
+     "useCase": "Reference architectures for AI",
+     "text": "Which best describes reference architectures you defined for AI systems (RAG, agents, MCP)?"
+    },
+    {
+     "id": "ARC-R17",
+     "level": 6,
+     "useCase": "Guardrails for AI solutions",
+     "text": "Which best describes guardrails or standards you defined for safe AI use in solutions?"
+    },
+    {
+     "id": "ARC-R18",
+     "level": 6,
+     "useCase": "Architecture coaching",
+     "text": "Which best describes guides or sessions you created to coach teams on AI architecture patterns?"
+    },
+    {
+     "id": "ARC-R19",
+     "level": 7,
+     "useCase": "AI-native target architecture",
+     "text": "Which best describes an AI-native target architecture or platform you shaped?"
+    },
+    {
+     "id": "ARC-R20",
+     "level": 7,
+     "useCase": "Organization AI governance",
+     "text": "Which best describes AI governance or strategy you shaped at organization level?"
+    }
+   ]
+  },
+  "PM": {
+   "name": "Delivery/Project Manager",
+   "questions": [
+    {
+     "id": "PM-R01",
+     "level": 1,
+     "useCase": "AI tool access and data rules",
+     "text": "Which best describes your access to approved AI tools (Claude, Copilot Chat, or another approved assistant) and your knowledge of approved use with project, service, and user data?"
+    },
+    {
+     "id": "PM-R02",
+     "level": 2,
+     "useCase": "Drafting communications",
+     "text": "How often do you draft emails, stakeholder messages, or responses to users and customers with AI?"
+    },
+    {
+     "id": "PM-R03",
+     "level": 2,
+     "useCase": "Summarizing meetings, documents, and tickets",
+     "text": "How often do you summarize meetings, documents, email threads, or ticket histories with AI?"
+    },
+    {
+     "id": "PM-R04",
+     "level": 3,
+     "useCase": "Status and service reports",
+     "text": "How often do you generate status, service, or operational reports with AI (for example project status, SLA, or ticket trend reports)?"
+    },
+    {
+     "id": "PM-R05",
+     "level": 3,
+     "useCase": "Analyzing requirements and requests",
+     "text": "How often do you use AI to analyze requirements, business requests, or user requests for gaps, conflicts, or missing information?"
+    },
+    {
+     "id": "PM-R06",
+     "level": 3,
+     "useCase": "Notes and actions from transcripts",
+     "text": "How often do you create meeting notes, decisions, and action items from transcripts with AI?"
+    },
+    {
+     "id": "PM-R07",
+     "level": 3,
+     "useCase": "Plans, procedures, and knowledge articles",
+     "text": "How often do you draft plans, process documents, SOPs, or knowledge articles with AI?"
+    },
+    {
+     "id": "PM-R08",
+     "level": 4,
+     "useCase": "Risk, issue, and problem records",
+     "text": "How often do you maintain RAID logs, issue logs, or problem records with AI support?"
+    },
+    {
+     "id": "PM-R09",
+     "level": 4,
+     "useCase": "Analyzing delivery and service data",
+     "text": "How often do you analyze delivery, ticket, or service data with AI (for example from Jira, the service desk tool, or Excel) to find risks, trends, or recurring issues?"
+    },
+    {
+     "id": "PM-R10",
+     "level": 4,
+     "useCase": "Triaging and prioritizing incoming work",
+     "text": "How often do you use AI to triage, categorize, or prioritize incoming work (requests, incidents, defects, or change items)?"
+    },
+    {
+     "id": "PM-R11",
+     "level": 4,
+     "useCase": "Executive updates, business cases, and changes",
+     "text": "How often do you prepare steering committee, executive, or vendor updates, business cases, or change requests with AI?"
+    },
+    {
+     "id": "PM-R12",
+     "level": 5,
+     "useCase": "Connected reporting",
+     "text": "Which best describes AI pulling data directly from Jira, Confluence, Teams, or the service desk tool into your reports or dashboards?"
+    },
+    {
+     "id": "PM-R13",
+     "level": 5,
+     "useCase": "Forecasting demand and capacity",
+     "text": "Which best describes AI-assisted forecasting (delivery dates, ticket volumes, team capacity, or license and device needs)?"
+    },
+    {
+     "id": "PM-R14",
+     "level": 5,
+     "useCase": "Reusable workflows for recurring tasks",
+     "text": "Which best describes reusable AI templates, prompts, or workflows you run for recurring tasks (reports, reviews, onboarding, or access requests)?"
+    },
+    {
+     "id": "PM-R15",
+     "level": 5,
+     "useCase": "Agent-handled follow-ups and first responses",
+     "text": "Which best describes AI agents handling routine follow-ups, tracking, or first-line responses to users, with your review?"
+    },
+    {
+     "id": "PM-R16",
+     "level": 6,
+     "useCase": "Team AI playbook or knowledge base",
+     "text": "Which best describes an AI playbook, template set, or knowledge base you created for your team (PMO, service desk, or central function)?"
+    },
+    {
+     "id": "PM-R17",
+     "level": 6,
+     "useCase": "Reporting and process automation for others",
+     "text": "Which best describes AI-based reporting or process automation you built that your team or other teams now use?"
+    },
+    {
+     "id": "PM-R18",
+     "level": 6,
+     "useCase": "Coaching colleagues",
+     "text": "Which best describes guides or sessions you created to coach colleagues on AI use in delivery, analysis, or service work?"
+    },
+    {
+     "id": "PM-R19",
+     "level": 7,
+     "useCase": "Process redesigned around AI",
+     "text": "Which best describes a delivery, service, or operations process you redesigned end to end around AI (for example predictive delivery analytics, AI-first user support, or agent-run reporting)?"
+    },
+    {
+     "id": "PM-R20",
+     "level": 7,
+     "useCase": "Practices adopted organization-wide",
+     "text": "Which best describes AI-enabled delivery, service, or workplace practices from your work adopted across the organization?"
+    }
+   ]
+  },
+  "DE": {
+   "name": "Data Engineer",
+   "questions": [
+    {
+     "id": "DE-R01",
+     "level": 1,
+     "useCase": "AI tool access for data work",
+     "text": "Which best describes your access to AI tools for data work (Claude Code, GitHub Copilot, or an approved assistant)?"
+    },
+    {
+     "id": "DE-R02",
+     "level": 2,
+     "useCase": "Explaining SQL and pipelines",
+     "text": "How often do you ask AI to explain SQL, data models, or pipeline code?"
+    },
+    {
+     "id": "DE-R03",
+     "level": 2,
+     "useCase": "Small queries and scripts",
+     "text": "How often do you use AI to write small SQL queries or data scripts?"
+    },
+    {
+     "id": "DE-R04",
+     "level": 3,
+     "useCase": "Writing and optimizing SQL",
+     "text": "How often do you write or optimize SQL with AI and verify the results?"
+    },
+    {
+     "id": "DE-R05",
+     "level": 3,
+     "useCase": "Transformation code",
+     "text": "How often do you generate data transformation code (for example Python, Spark, or dbt) with AI?"
+    },
+    {
+     "id": "DE-R06",
+     "level": 3,
+     "useCase": "Data documentation",
+     "text": "How often do you document data models, lineage, or data dictionaries with AI?"
+    },
+    {
+     "id": "DE-R07",
+     "level": 3,
+     "useCase": "Data quality tests",
+     "text": "How often do you generate data quality checks or tests with AI?"
+    },
+    {
+     "id": "DE-R08",
+     "level": 4,
+     "useCase": "End-to-end pipeline changes",
+     "text": "How often do you build or change pipelines end to end with an AI coding agent?"
+    },
+    {
+     "id": "DE-R09",
+     "level": 4,
+     "useCase": "Troubleshooting jobs",
+     "text": "How often do you troubleshoot failed jobs or data issues with AI?"
+    },
+    {
+     "id": "DE-R10",
+     "level": 4,
+     "useCase": "Schema design",
+     "text": "How often do you use AI for schema design or data modeling?"
+    },
+    {
+     "id": "DE-R11",
+     "level": 4,
+     "useCase": "Profiling and anomalies",
+     "text": "How often do you use AI to profile datasets and find anomalies?"
+    },
+    {
+     "id": "DE-R12",
+     "level": 5,
+     "useCase": "Agentic pipeline changes",
+     "text": "Which best describes agentic changes across pipelines or repositories (for example migrations or refactors)?"
+    },
+    {
+     "id": "DE-R13",
+     "level": 5,
+     "useCase": "Connected data tools",
+     "text": "Which best describes AI connected to data catalogs, warehouses, or orchestration tools through MCP or APIs?"
+    },
+    {
+     "id": "DE-R14",
+     "level": 5,
+     "useCase": "Automated quality monitoring",
+     "text": "Which best describes automated data quality monitoring or triage with AI?"
+    },
+    {
+     "id": "DE-R15",
+     "level": 5,
+     "useCase": "Reusable data workflows",
+     "text": "Which best describes reusable AI workflows or commands for recurring data engineering tasks?"
+    },
+    {
+     "id": "DE-R16",
+     "level": 6,
+     "useCase": "Standards for AI-written SQL",
+     "text": "Which best describes standards you defined for AI-generated pipeline and SQL code?"
+    },
+    {
+     "id": "DE-R17",
+     "level": 6,
+     "useCase": "Data prep for AI use cases",
+     "text": "Which best describes data preparation for AI use cases (for example RAG ingestion or embeddings) that you built for others?"
+    },
+    {
+     "id": "DE-R18",
+     "level": 6,
+     "useCase": "Coaching on AI data work",
+     "text": "Which best describes guides or sessions you created to coach colleagues on AI-assisted data engineering?"
+    },
+    {
+     "id": "DE-R19",
+     "level": 7,
+     "useCase": "AI data platform",
+     "text": "Which best describes a self-service AI data platform or agent-driven data operations you shaped?"
+    },
+    {
+     "id": "DE-R20",
+     "level": 7,
+     "useCase": "Data governance for AI",
+     "text": "Which best describes data governance for AI (lineage, quality, access controls) you established at organization level?"
+    }
+   ]
+  }
+ },
+ "cross": [
+  {
+   "id": "CR-C01",
+   "level": 1,
+   "useCase": "Approved assistants and policy",
+   "text": "Which best describes your access to approved general AI assistants (for example Claude or Copilot Chat) and the AI usage policy?"
+  },
+  {
+   "id": "CR-C02",
+   "level": 2,
+   "useCase": "Written communication",
+   "text": "How often do you use AI to draft or improve written communication (emails, messages, documents)?"
+  },
+  {
+   "id": "CR-C03",
+   "level": 3,
+   "useCase": "Verifying AI output",
+   "text": "How often do you verify AI output (facts, code, numbers) before using or sharing it?"
+  },
+  {
+   "id": "CR-C04",
+   "level": 3,
+   "useCase": "Learning with AI",
+   "text": "How often do you use AI to learn a new skill, tool, or domain topic?"
+  },
+  {
+   "id": "CR-C05",
+   "level": 4,
+   "useCase": "Giving AI rich context",
+   "text": "How often do you give AI rich context (documents, examples, constraints) rather than one-line prompts?"
+  },
+  {
+   "id": "CR-C06",
+   "level": 4,
+   "useCase": "Work outside your primary role",
+   "text": "How often do you use AI for work outside your primary role (for example a PM writing a script or a developer drafting a test plan)?"
+  },
+  {
+   "id": "CR-C07",
+   "level": 5,
+   "useCase": "Chaining AI steps",
+   "text": "Which best describes how you chain several AI steps or tools to complete a multi-step task?"
+  },
+  {
+   "id": "CR-C08",
+   "level": 5,
+   "useCase": "Connected company data",
+   "text": "Which best describes how you use AI with company data (Jira, Confluence, Slack, Salesforce) through approved connectors?"
+  },
+  {
+   "id": "CR-C09",
+   "level": 6,
+   "useCase": "Sharing AI knowledge",
+   "text": "Which best describes AI knowledge you share with others (demos, guides, community of practice)?"
+  },
+  {
+   "id": "CR-C10",
+   "level": 7,
+   "useCase": "Process redesign",
+   "text": "Which best describes a business process you redesigned end to end around AI?"
+  }
+ ],
+ "roleMap": [
+  {
+   "teamRole": "Developer",
+   "questionnaire": "DEV"
+  },
+  {
+   "teamRole": "Developer, Doc Auth",
+   "questionnaire": "DEV"
+  },
+  {
+   "teamRole": "Product Engineer",
+   "questionnaire": "DEV"
+  },
+  {
+   "teamRole": "DevOps",
+   "questionnaire": "DEV"
+  },
+  {
+   "teamRole": "DevOps, Central Function (CF)",
+   "questionnaire": "DEV"
+  },
+  {
+   "teamRole": "Central Function (CF)",
+   "questionnaire": "DEV"
+  },
+  {
+   "teamRole": "QA",
+   "questionnaire": "QA"
+  },
+  {
+   "teamRole": "QA Lead",
+   "questionnaire": "QA"
+  },
+  {
+   "teamRole": "Domain QA",
+   "questionnaire": "QA"
+  },
+  {
+   "teamRole": "SDET",
+   "questionnaire": "QA"
+  },
+  {
+   "teamRole": "Tech Lead",
+   "questionnaire": "TL"
+  },
+  {
+   "teamRole": "Competency Lead",
+   "questionnaire": "TL"
+  },
+  {
+   "teamRole": "Solution Architect",
+   "questionnaire": "ARC"
+  },
+  {
+   "teamRole": "Data Architect",
+   "questionnaire": "ARC"
+  },
+  {
+   "teamRole": "Enterprise Architect",
+   "questionnaire": "ARC"
+  },
+  {
+   "teamRole": "Manager - Architecture",
+   "questionnaire": "ARC"
+  },
+  {
+   "teamRole": "Information Security",
+   "questionnaire": "ARC"
+  },
+  {
+   "teamRole": "Delivery Lead",
+   "questionnaire": "PM"
+  },
+  {
+   "teamRole": "Analyst",
+   "questionnaire": "PM"
+  },
+  {
+   "teamRole": "Manager - Central Function",
+   "questionnaire": "PM"
+  },
+  {
+   "teamRole": "Manager - Technology Services",
+   "questionnaire": "PM"
+  },
+  {
+   "teamRole": "Manager - Workplace Technology",
+   "questionnaire": "PM"
+  },
+  {
+   "teamRole": "Service Desk (L2)",
+   "questionnaire": "PM"
+  },
+  {
+   "teamRole": "Data Engineer",
+   "questionnaire": "DE"
+  }
+ ]
+}
