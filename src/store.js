@@ -178,7 +178,9 @@ class LocalFileStore {
 
   async load() {
     const wb = new ExcelJS.Workbook();
-    try { await wb.xlsx.readFile(this.file); }
+    // ExcelJS reports a missing file as a plain "File not found" error with no
+    // code, so check first: a missing file means start a new workbook.
+    try { if (fs.existsSync(this.file)) await wb.xlsx.readFile(this.file); }
     catch (e) {
       if (e.code === "EBUSY" || e.code === "EPERM")
         throw new Error(`The Excel file is open in Excel. Close "${this.file}" and try again.`);
