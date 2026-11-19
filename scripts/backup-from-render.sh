@@ -60,3 +60,19 @@ stamp="$(date '+%Y%m%d-%H%M%S')"
 cp "$file" "$BACKUP_DIR/render-results-$stamp.xlsx"
 cp "$file" "$LATEST"
 log "SAVED render-results-$stamp.xlsx ($(stat -c %s "$file") bytes)"
+
+# Rebuild the review report (backup/AI Survey Review.xlsx). Needs Node and the
+# project's node_modules (npm ci); timers do not load nvm, so try it here.
+if [ -s "$HOME/.nvm/nvm.sh" ]; then
+  # shellcheck disable=SC1091
+  . "$HOME/.nvm/nvm.sh" >/dev/null && nvm use --silent 22 >/dev/null || true
+fi
+if command -v node >/dev/null && [ -d "$PROJECT_DIR/node_modules/exceljs" ]; then
+  if node "$PROJECT_DIR/scripts/make-review-report.js" "$LATEST" "$BACKUP_DIR/AI Survey Review.xlsx" >/dev/null 2>"$work/report.err"; then
+    log "REPORT AI Survey Review.xlsx updated"
+  else
+    log "REPORT failed: $(head -c 200 "$work/report.err")"
+  fi
+else
+  log "REPORT skipped (run npm ci in $PROJECT_DIR to enable)"
+fi
