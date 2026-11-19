@@ -277,4 +277,7 @@ app.use((err, req, res, next) => {
 
 app.listen(config.port, () => {
   console.log(`AI adoption survey listening on ${config.baseUrl} (port ${config.port})${config.mock ? " in DEV_MOCK mode" : ""}`);
+  const lanIps = Object.values(require("os").networkInterfaces()).flat()
+    .filter(n => n && n.family === "IPv4" && !n.internal).map(n => n.address);
+  if (lanIps.length) console.log(`reachable from the network at: ${lanIps.map(ip => `http://${ip}:${config.port}`).join(", ")}`);
 });
