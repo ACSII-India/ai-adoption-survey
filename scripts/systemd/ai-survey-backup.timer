@@ -1,0 +1,10 @@
+[Unit]
+Description=Back up AI adoption survey results from Render every 10 minutes
+
+[Timer]
+OnBootSec=2min
+OnUnitActiveSec=10min
+Persistent=true
+
+[Install]
+WantedBy=timers.target

@@ -1,0 +1,62 @@
+#!/usr/bin/env bash
+# Downloads the results workbook from the Render trial (DEV_MOCK) and keeps a
+# copy in the local backup folder. Run on a timer (see scripts/systemd/).
+#
+#   RENDER_URL   service address (default https://ai-adoption-survey.onrender.com)
+#   BACKUP_DIR   where copies go  (default <project>/backup)
+#
+# A new timestamped file is written only when the workbook changed.
+# "render-results-latest.xlsx" always holds the most recent download.
+# Old copies are never deleted: after a Render restart the server starts a new,
+# empty file, so earlier rows only exist in the older timestamped copies.
+#
+# Only works while Render runs with DEV_MOCK=true (trial sign-in). With the
+# real Entra setup the results are already in OneDrive/SharePoint.
+set -euo pipefail
+
+RENDER_URL="${RENDER_URL:-https://ai-adoption-survey.onrender.com}"
+RENDER_URL="${RENDER_URL%/}"
+PROJECT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
+BACKUP_DIR="${BACKUP_DIR:-$PROJECT_DIR/backup}"
+LATEST="$BACKUP_DIR/render-results-latest.xlsx"
+LOG="$BACKUP_DIR/backup.log"
+
+mkdir -p "$BACKUP_DIR"
+umask 077
+log() { printf '%s %s\n' "$(date '+%Y-%m-%d %H:%M:%S')" "$*" | tee -a "$LOG"; }
+
+work="$(mktemp -d)"
+trap 'rm -rf "$work"' EXIT
+jar="$work/cookies"
+file="$work/results.xlsx"
+
+# Wake the service (a cold start on the Free plan takes up to a minute).
+if ! curl -fsS --max-time 120 --retry 2 --retry-delay 10 "$RENDER_URL/healthz" -o /dev/null; then
+  log "ERROR service not reachable at $RENDER_URL"
+  exit 1
+fi
+
+# Trial sign-in as admin, then download the workbook with that session.
+curl -fsS --max-time 60 -c "$jar" -b "$jar" "$RENDER_URL/auth/signin?as=admin" -o /dev/null
+code="$(curl -sS --max-time 120 -b "$jar" -w '%{http_code}' -o "$file" "$RENDER_URL/admin/api/download" || true)"
+
+if [ "$code" = "501" ]; then
+  log "SKIP Render has no EXCEL_LOCAL_PATH set, so there is no file to download"
+  exit 0
+fi
+# A valid .xlsx is a zip file starting with "PK". Anything else means there are
+# no submissions since the last restart (no file yet) or the request failed.
+if [ "$code" != "200" ] || [ ! -s "$file" ] || [ "$(head -c2 "$file")" != "PK" ]; then
+  log "SKIP no workbook available yet (HTTP $code)"
+  exit 0
+fi
+
+if [ -f "$LATEST" ] && cmp -s "$file" "$LATEST"; then
+  log "OK unchanged"
+  exit 0
+fi
+
+stamp="$(date '+%Y%m%d-%H%M%S')"
+cp "$file" "$BACKUP_DIR/render-results-$stamp.xlsx"
+cp "$file" "$LATEST"
+log "SAVED render-results-$stamp.xlsx ($(stat -c %s "$file") bytes)"

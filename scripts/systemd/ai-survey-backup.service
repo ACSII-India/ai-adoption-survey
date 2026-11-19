@@ -1,0 +1,7 @@
+[Unit]
+Description=Back up AI adoption survey results from Render
+After=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=%h/PROJECTS/ai-adoption-survey/scripts/backup-from-render.sh

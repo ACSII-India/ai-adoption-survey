@@ -254,7 +254,10 @@ app.get("/admin/api/download", auth.requireReviewer, async (req, res) => {
     const r = await store.download();
     res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
     res.setHeader("Content-Disposition", `attachment; filename="ai-adoption-responses-${new Date().toISOString().slice(0, 10)}.xlsx"`);
-    Readable.fromWeb(r.body).pipe(res);
+    // A read error mid-stream must not crash the server (unhandled 'error').
+    Readable.fromWeb(r.body)
+      .on("error", e => { console.error("download failed:", e.message); res.destroy(e); })
+      .pipe(res);
   } catch (e) {
     console.error("download failed:", e.message);
     res.status(502).send("The Excel file could not be downloaded right now.");

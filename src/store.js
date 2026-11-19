@@ -315,6 +315,11 @@ class LocalFileStore {
   }
 
   async download() {
+    // Before the first submission the file does not exist yet: create the
+    // empty workbook (header rows only) so the download still works.
+    if (!fs.existsSync(this.file)) await this.serial(async () => {
+      if (!fs.existsSync(this.file)) await this.save(await this.load());
+    });
     return { body: Readable.toWeb(fs.createReadStream(this.file)) };
   }
   async webUrl() { return ""; }
