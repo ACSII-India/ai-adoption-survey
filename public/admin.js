@@ -80,7 +80,7 @@
     const r = data.responses.find(x => x["Submission ID"] === sel);
     if (!r) { box.innerHTML = ""; return; }
     const answers = Object.keys(r).filter(k => /^[RC]\d\d$/.test(k)).map(k => `<td>${k}: <strong>${esc(r[k])}</strong></td>`);
-    let h = `<div class="panel"><h2>${esc(r.Name)}</h2><p class="hint" style="margin-top:0">Employee ID ${esc(r["Respondent ID (Employee ID)"])}, ${esc(r.Email)}, ${esc(r.Department)}<br>${esc(r["Team role"])}, ${esc(r.Role)} questionnaire. Score ${esc(r["Score %"])}%, Level ${esc(r["Current level"])} ${esc(r["Level name"])} (${esc(r["Level score"])}), ${esc(r["Provisional tier"])}. Submitted ${esc(String(r["Submitted at (UTC)"]).slice(0, 16).replace("T", " "))} UTC. Status: ${esc(r.Status)}.</p>`;
+    let h = `<div class="panel"><h2>${esc(r.Name)}</h2><p class="hint" style="margin-top:0">Employee ID ${esc(r["Respondent ID (Employee ID)"])}, ${esc(r.Email)}${r.Department ? ", " + esc(r.Department) : ""}<br>${esc(r["Team role"])}, ${esc(r.Role)} questionnaire. Score ${esc(r["Score %"])}%, Level ${esc(r["Current level"])} ${esc(r["Level name"])} (${esc(r["Level score"])}), ${esc(r["Provisional tier"])}. Submitted ${esc(String(r["Submitted at (UTC)"]).slice(0, 16).replace("T", " "))} UTC. Status: ${esc(r.Status)}.</p>`;
     const evs = evFor(sel);
     if (evs.length) h += "<h3>Evidence</h3>" + evs.map(evCard).join("");
     h += `<h3>Answers</h3><div class="tw"><table><tbody>${[0, 10, 20].map(i => `<tr>${answers.slice(i, i + 10).join("")}</tr>`).join("")}</tbody></table></div>`;

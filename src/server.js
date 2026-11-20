@@ -117,10 +117,10 @@ app.post("/api/review", limiter(10, 40), async (req, res) => {
 
 app.post("/api/submit", limiter(60, 10), async (req, res) => {
   const p = req.body.profile || {};
-  const profile = { name: str(p.name, 100), empId: str(p.empId, 40), email: str(p.email, 200).toLowerCase(), dept: str(p.dept, 80), teamRole: str(p.teamRole, 80) };
-  if (!profile.name || !profile.dept) return fail(res, 400, "bad_profile", "Name and department are required.");
-  if (Array.isArray(bank.departments) && bank.departments.length && !bank.departments.includes(profile.dept))
-    return fail(res, 400, "bad_profile", "Choose your department from the list.");
+  // Department is not asked: it comes from the HR/org file by employee ID at
+  // assessment time. The column stays in the workbook (empty) so its layout is unchanged.
+  const profile = { name: str(p.name, 100), empId: str(p.empId, 40), email: str(p.email, 200).toLowerCase(), dept: "", teamRole: str(p.teamRole, 80) };
+  if (!profile.name) return fail(res, 400, "bad_profile", "Name is required.");
   if (!/^[A-Za-z0-9._-]{2,40}$/.test(profile.empId)) return fail(res, 400, "bad_profile", "Enter a valid employee ID (letters, digits, dot, dash, or underscore).");
   if (!EMAIL_RE.test(profile.email)) return fail(res, 400, "bad_profile", "Enter a valid email address.");
   if (!domainOk(profile.email)) return fail(res, 400, "bad_profile", "Use your work email address.");

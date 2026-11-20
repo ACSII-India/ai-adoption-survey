@@ -5,7 +5,7 @@
   let cfg = null, bank = null, st = null, busy = false, keyPick = null;
   const $ = id => document.getElementById(id);
   const esc = s => String(s == null ? "" : s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
-  const blank = () => ({ profile: { name: "", empId: "", email: "", dept: "", teamRole: "" }, qset: "", answers: {}, evidence: {}, verifyToken: "", submitted: null });
+  const blank = () => ({ profile: { name: "", empId: "", email: "", teamRole: "" }, qset: "", answers: {}, evidence: {}, verifyToken: "", submitted: null });
   const save = () => { try { localStorage.setItem(KEY, JSON.stringify(st)); } catch (e) {} };
   const qs = () => Scoring.questionsFor(bank, st.qset);
   const scale = lv => Scoring.scaleFor(bank, lv);
@@ -20,7 +20,7 @@
   function nextStep() {
     const p = st.profile;
     if (st.submitted) return { t: "done" };
-    if (!p.name || !p.empId || !p.email || !p.dept) return { t: "profile" };
+    if (!p.name || !p.empId || !p.email) return { t: "profile" };
     if (cfg.requireEmailCode && !st.verifyToken) return { t: "verify" };
     if (!st.qset) return { t: "role" };
     for (const q of qs()) {
@@ -45,9 +45,9 @@
   function render() {
     const p = st.profile, parts = [];
     parts.push(bubble("bot", `Hi! This check-in places you on the 7-level AI adoption scale for your role (${esc(cfg.cycle)}). It takes about 12 minutes: 30 multiple-choice questions, plus a short example whenever you claim advanced use (Level 5 and above).\n\nAnswer for what you do today, not what you plan to do. Do not paste customer data, credentials, or confidential content; describe it and add a link instead.`));
-    if (p.name && p.empId && p.email && p.dept) {
+    if (p.name && p.empId && p.email) {
       parts.push(bubble("bot", "First, your details."));
-      parts.push(bubble("me", `${esc(p.name)}\nEmployee ID: ${esc(p.empId)}\n${esc(p.email)}\n${esc(p.dept)}`));
+      parts.push(bubble("me", `${esc(p.name)}\nEmployee ID: ${esc(p.empId)}\n${esc(p.email)}`));
     }
     if (st.qset) {
       parts.push(bubble("bot", "Which team role fits you best?"));
@@ -98,27 +98,22 @@
     const undoBtn = Object.keys(st.answers).length ? '<button class="btn ghost" id="undo" type="button">Change my last answer</button>' : "";
 
     if (step.t === "profile") {
-      // A fixed department list (data/questions.json "departments") keeps names
-      // consistent for reporting; without one, the field is free text.
-      const depts = Array.isArray(bank.departments) ? bank.departments : [];
+      // No department field: group views take department, project team and BU
+      // from the HR/org file by employee ID, so nothing is typed by hand.
       const domains = cfg.allowedEmailDomains.length ? ` (${cfg.allowedEmailDomains.map(d => "@" + d).join(" or ")})` : "";
       el.innerHTML = `<div class="panel"><div class="grid2f">
         <div><label class="f" for="nm">Name</label><input id="nm" autocomplete="name" maxlength="100"></div>
         <div><label class="f" for="eid">Employee ID</label><input id="eid" maxlength="40"></div>
-        <div><label class="f" for="em">Work email${esc(domains)}</label><input id="em" type="email" autocomplete="email" maxlength="200"></div>
-        <div><label class="f" for="dp">Department</label>${depts.length
-          ? `<select id="dp"><option value="">Choose your department</option>${depts.map(d => `<option>${esc(d)}</option>`).join("")}</select>`
-          : '<input id="dp" maxlength="80">'}</div></div>
+        <div><label class="f" for="em">Work email${esc(domains)}</label><input id="em" type="email" autocomplete="email" maxlength="200"></div></div>
         <p class="err" id="perr" role="alert"></p><div class="row"><button class="btn" id="go" type="button">Continue</button></div></div>`;
-      const p = st.profile; $("nm").value = p.name; $("eid").value = p.empId; $("em").value = p.email; $("dp").value = !depts.length || depts.includes(p.dept) ? p.dept : "";
+      const p = st.profile; $("nm").value = p.name; $("eid").value = p.empId; $("em").value = p.email;
       $("go").onclick = () => {
-        const v = { name: $("nm").value.trim(), empId: $("eid").value.trim(), email: $("em").value.trim().toLowerCase(), dept: $("dp").value.trim() };
+        const v = { name: $("nm").value.trim(), empId: $("eid").value.trim(), email: $("em").value.trim().toLowerCase() };
         const dom = v.email.split("@")[1] || "";
         const bad = !v.name ? ["nm", "Enter your name."]
           : !/^[A-Za-z0-9._-]{2,40}$/.test(v.empId) ? ["eid", "Enter your employee ID (letters, digits, dot, dash, or underscore)."]
           : !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.email) ? ["em", "Enter a valid email address."]
-          : (cfg.allowedEmailDomains.length && !cfg.allowedEmailDomains.includes(dom)) ? ["em", "Use your work email address."]
-          : !v.dept ? ["dp", depts.length ? "Choose your department." : "Enter your department."] : null;
+          : (cfg.allowedEmailDomains.length && !cfg.allowedEmailDomains.includes(dom)) ? ["em", "Use your work email address."] : null;
         if (bad) { $("perr").textContent = bad[1]; $(bad[0]).focus(); return; }
         if (v.email !== st.profile.email) st.verifyToken = "";
         Object.assign(st.profile, v); save(); render();
@@ -221,7 +216,7 @@
 
   function resultsText() {
     const s = st.submitted.result, p = st.profile;
-    return ["AI adoption check-in results (" + cfg.cycle + ")", "", "Name: " + p.name, "Employee ID: " + p.empId, "Department: " + p.dept, "Team role: " + p.teamRole,
+    return ["AI adoption check-in results (" + cfg.cycle + ")", "", "Name: " + p.name, "Employee ID: " + p.empId, "Team role: " + p.teamRole,
       "Overall score: " + Math.round(s.pct * 1000) / 10 + "% (" + s.total + " of " + s.max + ")", "Current level: Level " + s.level + " " + s.levelName + " (level score " + Number(s.levelScore).toFixed(1) + ")",
       "Provisional tier: " + s.tier, "Submission: " + st.submitted.submissionId].concat(s.gaps.length ? ["", "To reach Level " + s.nextLevel + ":"].concat(s.gaps.map(g => "- " + g)) : []).join("\n");
   }
