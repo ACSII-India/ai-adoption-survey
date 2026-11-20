@@ -63,7 +63,9 @@ if command -v node >/dev/null && [ -d "$PROJECT_DIR/node_modules/exceljs" ] && [
   msg="$(RENDER_URL="$RENDER_URL" node "$PROJECT_DIR/scripts/restore-if-needed.js" "$file" "$LATEST" 2>&1)"; rc=$?
   set -e
   if [ $rc -eq 10 ]; then log "$msg"; exit 0; fi
-  if [ $rc -ne 0 ]; then log "${msg:-RESTORE check failed}"; fi
+  # A restore was needed but did not work: keep the previous (fuller) copy as
+  # the latest and try again next run, instead of saving the emptier download.
+  if [ $rc -ne 0 ]; then log "${msg:-RESTORE check failed}; keeping the previous copy, will retry"; exit 0; fi
 fi
 
 if [ -f "$LATEST" ] && cmp -s "$file" "$LATEST"; then
