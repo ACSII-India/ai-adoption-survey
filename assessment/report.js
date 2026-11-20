@@ -9,7 +9,9 @@
 // Writes to <out>:
 //   AI Assessment Report.xlsx      everything for the surveyor and dashboards
 //   individual/<EmpID> - <Name>.html   one email-ready report per person
-//   Mail merge.xlsx                one row per person for an Outlook mail merge
+//   Mail merge.xlsx                one row per person (email, level, next step)
+//   <results> (with assessment).xlsx   the results workbook with "Assessment" and
+//                                  "Assessment evidence" tabs added (--in-place: into the results file itself)
 //
 // Org file (optional): one row per employee, header row with "Employee ID" and
 // any of: Name, Department, Project team, BU, Director, Manager, Tech lead.
@@ -398,6 +400,29 @@ async function main() {
   sheet(mwb, "Mail merge", ["Email", "Name", "Subject", "Level", "Score", "Next step", "Body file", "Attachment", "Report file"], mm,
     { widths: { Email: 30, Name: 24, Subject: 44, Level: 24, "Next step": 80, "Body file": 50, Attachment: 50, "Report file": 50 }, wrap: ["Next step"] });
   await mwb.xlsx.writeFile(path.join(out, "Mail merge.xlsx"));
+
+  // The assessment saved into the results workbook itself, as two extra tabs
+  // ("Assessment" and "Assessment evidence"); the original sheets are untouched.
+  // Default: a copy in the out folder. --in-place: written into the results file.
+  const srcFile = path.resolve(o.in);
+  const withFile = o["in-place"] ? srcFile : path.join(out, `${path.basename(srcFile, path.extname(srcFile))} (with assessment).xlsx`);
+  const rwb = new ExcelJS.Workbook(); await rwb.xlsx.readFile(srcFile);
+  const copySheet = (from, name) => {
+    const old = rwb.getWorksheet(name); if (old) rwb.removeWorksheet(old.id);
+    const ws = rwb.addWorksheet(name);
+    ws.columns = from.columns.map(c => ({ width: c.width }));
+    from.eachRow({ includeEmpty: false }, (row, i) => {
+      const r = ws.getRow(i);
+      row.eachCell({ includeEmpty: true }, (cell, c) => { r.getCell(c).value = cell.value; r.getCell(c).numFmt = cell.numFmt; r.getCell(c).alignment = cell.alignment; });
+      if (i === 1) { r.font = { bold: true, color: { argb: "FFFFFFFF" } }; r.fill = HEAD_FILL; r.alignment = { vertical: "middle", wrapText: true }; }
+      r.commit();
+    });
+    ws.views = [{ state: "frozen", ySplit: 1 }];
+    if (ws.rowCount > 1) ws.autoFilter = { from: { row: 1, column: 1 }, to: { row: 1, column: ws.columnCount } };
+  };
+  copySheet(wb.getWorksheet("Individuals"), "Assessment");
+  copySheet(wb.getWorksheet("Evidence"), "Assessment evidence");
+  await rwb.xlsx.writeFile(withFile);
   // Send list for the Outlook draft script (paths are relative to the out folder).
   const csv = v => `"${String(v ?? "").replace(/"/g, '""')}"`;
   fs.writeFileSync(path.join(out, "Send list.csv"), "﻿" + [["Email", "Name", "Subject", "Body file", "Attachment", "From mailbox", "Cc"].map(csv).join(","),
@@ -410,6 +435,7 @@ async function main() {
   console.log(`Wrote: ${path.join(out, "AI Assessment Report.xlsx")}`);
   console.log(`Wrote: ${results.length} reports in ${path.join(out, "individual")}`);
   console.log(`Wrote: ${path.join(out, "Mail merge.xlsx")}`);
+  console.log(`Wrote: ${withFile} (results with the Assessment and Assessment evidence tabs)`);
   console.log(`Wrote: ${mm.filter(m => m.Attachment).length} PDFs in ${path.join(out, "pdf")}, ${mm.length} emails in ${path.join(out, "eml")} (open in Outlook to send), and Send list.csv`);
   if (prev) console.log(`Trend vs ${prev.cycle}: up ${trends.filter(t => t.status === "Up").length}, same ${trends.filter(t => t.status === "Same").length}, down ${trends.filter(t => t.status === "Down").length}, new ${trends.filter(t => t.status === "New").length}, not in this cycle ${trends.filter(t => t.status === "Not in this cycle").length}${rulesNote ? ". " + rulesNote : ""}`);
   else console.log("Trend: no earlier cycle in history yet; this run becomes the baseline.");

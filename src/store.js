@@ -145,6 +145,9 @@ class ExcelStore {
     });
   }
 
+  // Assessment tabs are written only for the local Excel file (trial mode) so far.
+  async saveAssessment() { return false; }
+  async listAssessmentEvidence() { return []; }
   async download() { return this.graph.raw(`${this.item}/content`); }
   async webUrl() { return (await this.graph.get(`${this.item}?$select=webUrl`)).webUrl; }
 }
@@ -262,6 +265,37 @@ class LocalFileStore {
     return (await this.listResponses()).find(r => r["Submission ID"] === submissionId) || null;
   }
 
+  // Rows of the "Assessment evidence" tab for one submission (judgements included).
+  async listAssessmentEvidence(submissionId) {
+    const wb = await this.load();
+    const ws = wb.getWorksheet("Assessment evidence");
+    if (!ws) return [];
+    const headers = (ws.getRow(1).values || []).slice(1).map(v => String(this.clean(v)));
+    return this.rows(ws, headers).filter(r => r["Submission ID"] === submissionId);
+  }
+
+  // Assessment results from the assessment job, saved in this same workbook as
+  // two extra tabs: "Assessment" (one row per person) and "Assessment
+  // evidence" (one row per example). A person's earlier rows are replaced.
+  saveAssessment(submissionId, person, examples) {
+    return this.serial(async () => {
+      const wb = await this.load();
+      const upsert = (name, columns, rows) => {
+        let ws = wb.getWorksheet(name);
+        if (!ws) { ws = wb.addWorksheet(name); ws.getRow(1).font = { bold: true }; }
+        const headers = (ws.getRow(1).values || []).slice(1).map(v => String(this.clean(v)));
+        for (const c of columns) if (!headers.includes(c)) { headers.push(c); ws.getRow(1).getCell(headers.length).value = c; }
+        const idCol = headers.indexOf("Submission ID") + 1;
+        for (let n = ws.rowCount; n >= 2; n--) if (idCol && this.clean(ws.getRow(n).getCell(idCol).value) === submissionId) ws.spliceRows(n, 1);
+        for (const r of rows) this.appendRow(ws, headers, r);
+      };
+      upsert("Assessment", person.columns, [person.row]);
+      upsert("Assessment evidence", examples.columns, examples.rows);
+      await this.save(wb);
+      return true;
+    });
+  }
+
   addSubmission(response, evidence) {
     return this.serial(async () => {
       const wb = await this.load();
@@ -356,6 +390,8 @@ class MemoryStore {
     if (!resp) throw new Error("submission_not_found");
     resp.Status = status;
   }
+  async saveAssessment() { return false; }
+  async listAssessmentEvidence() { return []; }
   async download() { return null; }
   async webUrl() { return ""; }
 }

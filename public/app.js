@@ -228,10 +228,19 @@
     };
   }
 
-  function showReport(el, html, { ready, id, r }) {
+  // Short summary shown above the full report.
+  function summaryHTML(s) {
+    if (!s) return "";
+    const list = a => a.map(esc).join(", ").replace(/, ([^,]*)$/, " or $1");
+    return `<div style="background:var(--soft,#eef3fb);border-radius:8px;padding:12px 14px;margin:8px 0 4px"><div style="font-size:20px;font-weight:700">Level ${s.level} – ${esc(s.levelName)} <span style="font-size:14px;font-weight:400">· score ${Number(s.score).toFixed(1)} of 7</span></div>` +
+      (s.next ? `<div style="margin-top:6px"><b>Next: Level ${s.next.level} – ${esc(s.next.name)}.</b> ${s.next.have.length ? `You have ${s.next.have.map(esc).join(", ")}. ` : ""}Complete at least ${s.next.stillNeeded} of: ${list(s.next.from)}.</div>` : `<div style="margin-top:6px">You have reached the top level.</div>`) + "</div>";
+  }
+
+  function showReport(el, html, { ready, id, r, summary }) {
     clearInterval(pollTimer);
     el.innerHTML = `<div class="panel">${ready ? '<p class="yes" style="font-weight:600;margin:0 0 8px" role="status">Your report is ready.</p>' : ""}
       <h2>Your AI adoption result</h2>
+      ${summaryHTML(summary)}
       <div class="row" style="margin-top:0"><button class="btn" id="pdf" type="button">Download PDF</button>${cfg.allowResubmit && st.submitted ? '<button class="btn ghost" id="again" type="button">Start a new check-in</button>' : ""}</div>
       <iframe id="rep" title="Your AI adoption result" style="width:100%;min-height:900px;border:1px solid var(--rule,#d9dee5);border-radius:8px;margin-top:12px;background:#fff"></iframe>
       ${linkRow(id, r)}</div>`;
@@ -259,7 +268,7 @@
   async function checkResult(el, id, r, manual) {
     try {
       const j = await fetchResult(id, r);
-      if (j.status === "ready" && j.html) showReport(el, j.html, { ready: true, id, r });
+      if (j.status === "ready" && j.html) showReport(el, j.html, { ready: true, id, r, summary: j.summary });
       else if (manual && $("pmsg")) $("pmsg").textContent = "Not ready yet. Please check again later.";
     } catch (e) { if (manual && $("pmsg")) $("pmsg").textContent = e.message; }
   }
@@ -303,7 +312,7 @@
       el.innerHTML = '<div class="panel"><p class="thinking" style="margin:0">Loading your result…</p></div>';
       try {
         const j = await fetchResult(id, r);
-        if (j.status === "ready" && j.html) showReport(el, j.html, { ready: true, id, r }); else showPending(el, { id, r });
+        if (j.status === "ready" && j.html) showReport(el, j.html, { ready: true, id, r, summary: j.summary }); else showPending(el, { id, r });
       } catch (e) { el.innerHTML = `<div class="panel"><p class="err" style="margin:0">${esc(e.message)}</p></div>`; }
       return;
     }

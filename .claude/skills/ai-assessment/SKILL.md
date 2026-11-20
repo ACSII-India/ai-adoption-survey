@@ -86,7 +86,9 @@ Fix every problem it lists and run `--check` again until it says the judgements 
 node assessment/report.js --in "<results file>" --org "<org file>"
 ```
 
-This writes reports 1–3 of the templates (individual reports and PDFs, workbook, email drafts input) to `assessment/out/`, compares with the latest earlier cycle in `assessment/history/` automatically, and saves this cycle there for future trends. Options: `--previous "<cycle name or snapshot file>"` to compare with a specific cycle; `--no-trend`; `--no-save` for test runs that must not enter the history.
+This writes reports 1–3 of the templates (individual reports and PDFs, the assessment workbook, email previews) to `assessment/out/`, plus **the results workbook with the assessment saved in it as two extra tabs**: `Assessment` (one row per person) and `Assessment evidence` (one row per example, with its judgement), as `assessment/out/<results name> (with assessment).xlsx`, or with `--in-place` into the results file itself. It also compares with the latest earlier cycle in `assessment/history/` automatically, and saves this cycle there for future trends. Options: `--previous "<cycle name or snapshot file>"` to compare with a specific cycle; `--no-trend`; `--no-save` for test runs that must not enter the history.
+
+**Automatic job (per submission).** `assessment/auto/run-auto.js` (timer `ai-survey-auto`) runs steps 2–4 for each new submission, using Claude Code headless only for step 3. It uploads each confirmed report to the survey and writes that person's rows into the live results workbook's `Assessment` tabs. The person's result link rebuilds the report from those tabs every time it is opened.
 
 ## 5. Prepare the result emails (.eml files, nothing sent)
 

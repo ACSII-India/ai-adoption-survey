@@ -5,7 +5,6 @@ node_modules/
 backup/
 assessment/out*/
 assessment/history/
-assessment/outbox/
 assessment/auto/state.json
 assessment/auto/auto.log
 assessment/auto/reports/

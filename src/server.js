@@ -209,12 +209,49 @@ ${Number(r["Current level"]) >= 5 ? "<p>Level 5 and above stays provisional unti
 }
 
 // Participant: is my report ready? (receipt from the submit response or the personal link)
-app.get("/api/result", limiter(10, 120), (req, res) => {
+app.get("/api/result", limiter(10, 120), async (req, res) => {
   const id = str(req.query.id, 20), r = str(req.query.r, 100);
   if (!id || !safeEq(r, hmac(`receipt|${id}`))) return fail(res, 403, "bad_receipt", "This results link is not valid.");
+  // Built from the results workbook (answers + the job's judgements in the
+  // "Assessment evidence" tab); the stored copy is only a fallback.
+  try {
+    const b = await reportFromWorkbook(id);
+    if (b && b.status === "ready") { results.setReady(id, b.html, "workbook"); return res.json(b); }
+    if (b && b.status === "pending") { const e = results.get(id); return res.json(e && e.status === "ready" && e.source === "assessment" ? { status: "ready", html: e.html } : { status: "pending" }); }
+  } catch (err) { console.error("report from workbook failed:", err.message); }
   const e = results.get(id);
   res.json(e && e.status === "ready" ? { status: "ready", html: e.html } : { status: "pending" });
 });
+
+// One person's report, rebuilt from the workbook with the assessment rules.
+// Returns { status: "ready", html } or { status: "pending" } (Level 5-7
+// examples not judged yet), or null when the submission is not in the workbook.
+async function reportFromWorkbook(id) {
+  const row = await store.getSubmission(id);
+  if (!row || row.Status === "Deleted") return null;
+  const t = v => String(v ?? "").replace(/^'/, "");
+  const qset = Object.keys(bank.questionnaires).find(k => bank.questionnaires[k].name === t(row.Role))
+    || (bank.roleMap.find(m => m.teamRole === t(row["Team role"])) || {}).questionnaire;
+  if (!qset) return null;
+  const qs = Scoring.questionsFor(bank, qset);
+  const answers = {};
+  qs.forEach((q, i) => { answers[q.id] = t(row[i < 20 ? "R" + String(i + 1).padStart(2, "0") : "C" + String(i - 19).padStart(2, "0")]).toUpperCase(); });
+  const empId = t(row["Respondent ID (Employee ID)"]);
+  const ev = (await store.listEvidence()).filter(e => t(e["Submission ID"]) === id);
+  const person = { submissionId: id, empId, name: t(row.Name), email: t(row.Email), department: t(row.Department), teamRole: t(row["Team role"]),
+    qset, role: bank.questionnaires[qset].name, cycle: t(row.Cycle) || config.cycleName, questions: qs, answers,
+    evidence: ev.map(e => ({ key: `${empId}|${t(e["Question ID"])}`, questionId: t(e["Question ID"]), level: Number(t(e.Level)), useCase: t(e["Use case"]),
+      question: (qs.find(q => q.id === t(e["Question ID"])) || {}).text, answer: t(e.Answer), example: t(e.Example), followupQ: t(e["Follow-up question"]), followupA: t(e["Follow-up answer"]) })) };
+  const judgements = {};
+  for (const a of await store.listAssessmentEvidence(id)) { try { judgements[`${empId}|${t(a["Question ID"])}`] = JSON.parse(t(a.Judgement)); } catch (_) {} }
+  const ar = assess.score(person, judgements);
+  const claimed = ar.practices.filter(p => p.needsProof && p.claimed);
+  if (claimed.some(p => !judgements[`${empId}|${p.id}`])) return { status: "pending" };
+  const nl = ar.nextLevel;
+  const summary = { level: ar.conf.level, levelName: assess.rules.levelNames[ar.conf.level], score: ar.conf.score,
+    next: nl ? { level: nl.level, name: nl.name, have: nl.have.map(p => p.useCase), stillNeeded: nl.stillNeeded, from: nl.missing.map(p => p.useCase) } : null };
+  return { status: "ready", html: renderIndividual(person, ar, { cycle: person.cycle, contact: false }), summary };
+}
 
 // Assessment job: upload confirmed reports, and list which ones Render already has.
 // Needs RESULTS_TOKEN on the server; without it these routes are switched off.
@@ -224,11 +261,20 @@ function jobAuth(req, res, next) {
   next();
 }
 app.get("/api/results/ready", jobAuth, (req, res) => res.json({ ready: results.readyIds() }));
-app.post("/api/results/upload", jobAuth, (req, res) => {
+app.post("/api/results/upload", jobAuth, async (req, res) => {
   const id = str(req.body.submissionId, 20), html = typeof req.body.html === "string" ? req.body.html : "";
   if (!/^S-[A-Z0-9]{6,12}$/.test(id) || !html || html.length > 150000) return fail(res, 400, "bad_request", "submissionId and html are required.");
   results.setReady(id, html, "assessment");
-  res.json({ ok: true, link: resultLinkFor(id) });
+  // The assessment rows, saved in the results workbook ("Assessment" tabs).
+  let saved = false;
+  const a = req.body.assessment, e = req.body.evidence;
+  const okTable = t => t && Array.isArray(t.columns) && t.columns.length <= 80 && t.columns.every(c => typeof c === "string");
+  if (okTable(a) && a.row && typeof a.row === "object" && okTable(e) && Array.isArray(e.rows) && e.rows.length <= 40) {
+    const clean = row => Object.fromEntries(Object.entries(row).filter(([k]) => typeof k === "string").map(([k, v]) => [k.slice(0, 80), typeof v === "number" ? v : str(String(v ?? ""), 4000)]));
+    try { saved = await store.saveAssessment(id, { columns: a.columns, row: clean(a.row) }, { columns: e.columns, rows: e.rows.map(clean) }); }
+    catch (err) { console.error("assessment save failed:", err.message); }
+  }
+  res.json({ ok: true, link: resultLinkFor(id), savedToWorkbook: saved });
 });
 
 // Personal result link (same one the participant sees after submitting).

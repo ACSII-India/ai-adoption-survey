@@ -1,6 +1,5 @@
 {
-  "_about": "Settings for the automatic per-submission job (assessment/auto/run-auto.js). It judges new submissions with Claude Code headless and puts each confirmed report on the survey page (uploadReports, surveyUrl; needs the same RESULTS_TOKEN here, in assessment/auto/results-token.txt or the environment, and on Render). People see \"Your report is ready\" on the page; no email is used. notifyByEmail=false keeps the optional \"result is ready\" email off (and autoSend=false keeps any such email a draft). onlyEmails: when not empty, only submissions from these addresses are handled (for testing).",
-  "autoSend": false,
+  "_about": "Settings for the automatic per-submission job (assessment/auto/run-auto.js). It judges new submissions with Claude Code headless and puts each confirmed report on the survey page (uploadReports, surveyUrl; needs the same RESULTS_TOKEN here, in assessment/auto/results-token.txt or the environment, and on Render). People see \"Your report is ready\" on the page; no email is used. onlyEmails: when not empty, only submissions from these addresses are handled (for testing).",
   "onlyEmails": [
     "sjavalekar@acsi-india.org"
   ],
@@ -10,6 +9,5 @@
   "claudePath": "",
   "claudeTimeoutMinutes": 20,
   "uploadReports": true,
-  "surveyUrl": "https://ai-adoption-survey.onrender.com",
-  "notifyByEmail": false
+  "surveyUrl": "https://ai-adoption-survey.onrender.com"
 }
