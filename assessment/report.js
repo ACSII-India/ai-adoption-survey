@@ -19,7 +19,21 @@ const fs = require("fs");
 const path = require("path");
 const ExcelJS = require("exceljs");
 const { bank, rules, LEVELS, CRITERIA_LABELS, loadResults, score, decide, toCount, statusText, median } = require("./lib.js");
-const { renderIndividual } = require("./individual.js");
+const { spawnSync } = require("child_process");
+const { renderIndividual, renderEmail } = require("./individual.js");
+
+// Chrome or Chromium prints the one-page PDFs. CHROME_PATH overrides the search.
+function findChrome() {
+  const candidates = [process.env.CHROME_PATH, "google-chrome", "google-chrome-stable", "chromium", "chromium-browser",
+    "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe", "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe",
+    "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"].filter(Boolean);
+  for (const c of candidates) {
+    if (c.includes("/") || c.includes("\\")) { if (fs.existsSync(c)) return c; continue; }
+    const w = spawnSync(process.platform === "win32" ? "where" : "which", [c], { encoding: "utf8" });
+    if (w.status === 0 && w.stdout.trim()) return w.stdout.trim().split(/\r?\n/)[0];
+  }
+  return null;
+}
 const history = require("./history.js");
 
 function args() {
@@ -344,23 +358,44 @@ async function main() {
 
   await wb.xlsx.writeFile(path.join(out, "AI Assessment Report.xlsx"));
 
-  // Individual reports and mail merge
+  // Individual reports (HTML + PDF), email bodies and the send list
+  const emailCfg = JSON.parse(fs.readFileSync(path.join(__dirname, "email.json"), "utf8"));
+  if (!emailCfg.senderName) console.log("Note: assessment/email.json has no senderName yet; the email signature shows only the team line.");
+  const chrome = o["no-pdf"] ? null : findChrome();
+  if (!o["no-pdf"] && !chrome) console.log("Note: no Chrome or Chromium found (set CHROME_PATH), so PDFs were not made.");
+  for (const d of ["individual", "pdf", "emails"]) { fs.rmSync(path.join(out, d), { recursive: true, force: true }); fs.mkdirSync(path.join(out, d), { recursive: true }); }
   const mm = [];
   for (const { p, r } of results) {
-    const file = `${safeFile(p.empId)} - ${safeFile(p.name)}.html`;
+    const base = `${safeFile(p.empId)} - ${safeFile(p.name)}`;
     const tr = trendById.get(p.empId.toLowerCase());
     const trend = tr && tr.status !== "New" ? { cycle: prev.cycle, prevLevel: tr.prevLevel, change: tr.change, prevScore: tr.prevScore } : null;
-    fs.writeFileSync(path.join(out, "individual", file), renderIndividual(p, r, { cycle, contact: true, trend }));
+    const htmlFile = path.join(out, "individual", base + ".html");
+    fs.writeFileSync(htmlFile, renderIndividual(p, r, { cycle, contact: true, trend }));
+    let pdf = "";
+    if (chrome) {
+      const pdfFile = path.join(out, "pdf", base + ".pdf");
+      const run = spawnSync(chrome, ["--headless=new", "--no-sandbox", "--disable-gpu", "--no-pdf-header-footer", `--print-to-pdf=${pdfFile}`, "file://" + htmlFile], { stdio: "ignore", timeout: 60000 });
+      if (run.status === 0 && fs.existsSync(pdfFile)) pdf = `pdf/${base}.pdf`; else console.log(`PDF failed for ${p.empId}`);
+    }
+    const mail = renderEmail(p, r, { cycle, trend, email: emailCfg });
+    fs.writeFileSync(path.join(out, "emails", base + ".html"), mail.html);
+    fs.writeFileSync(path.join(out, "emails", base + ".txt"), mail.text);
     const nl = r.nextLevel;
     mm.push({
-      Email: p.email, Name: p.name, Subject: `Your AI adoption check-in result – ${cycle}`, Level: `Level ${r.conf.level} – ${levelName(r.conf.level)}`, Score: r.conf.score,
+      Email: p.email, Name: p.name, Subject: mail.subject, Level: `Level ${r.conf.level} – ${levelName(r.conf.level)}`, Score: r.conf.score,
       "Next step": nl ? `To reach Level ${nl.level} – ${nl.name}, complete at least ${nl.stillNeeded} of: ${nl.missing.map(x => x.useCase).join("; ")}.` : "You have reached the top level.",
-      "Report file": path.join(out, "individual", file)
+      "Body file": `emails/${base}.html`, Attachment: pdf, "Report file": `individual/${base}.html`
     });
   }
   const mwb = new ExcelJS.Workbook();
-  sheet(mwb, "Mail merge", ["Email", "Name", "Subject", "Level", "Score", "Next step", "Report file"], mm, { widths: { Email: 30, Name: 24, Subject: 44, Level: 24, "Next step": 80, "Report file": 70 }, wrap: ["Next step"] });
+  sheet(mwb, "Mail merge", ["Email", "Name", "Subject", "Level", "Score", "Next step", "Body file", "Attachment", "Report file"], mm,
+    { widths: { Email: 30, Name: 24, Subject: 44, Level: 24, "Next step": 80, "Body file": 50, Attachment: 50, "Report file": 50 }, wrap: ["Next step"] });
   await mwb.xlsx.writeFile(path.join(out, "Mail merge.xlsx"));
+  // Send list for the Outlook draft script (paths are relative to the out folder).
+  const csv = v => `"${String(v ?? "").replace(/"/g, '""')}"`;
+  fs.writeFileSync(path.join(out, "Send list.csv"), "﻿" + [["Email", "Name", "Subject", "Body file", "Attachment", "From mailbox", "Cc"].map(csv).join(","),
+    ...mm.map(m => [m.Email, m.Name, m.Subject, m["Body file"], m.Attachment, emailCfg.fromMailbox || "", emailCfg.cc || ""].map(csv).join(","))].join("\r\n") + "\r\n");
+  fs.copyFileSync(path.join(__dirname, "send", "create-outlook-drafts.ps1"), path.join(out, "create-outlook-drafts.ps1"));
 
   console.log(`People assessed: ${results.length} (left out ${skipped.length})`);
   console.log(`Levels: ${[0, ...LEVELS].map((L, i) => `L${L} ${orgStats.spread[i]}`).join(" · ")}`);
@@ -369,6 +404,7 @@ async function main() {
   console.log(`Wrote: ${path.join(out, "AI Assessment Report.xlsx")}`);
   console.log(`Wrote: ${results.length} reports in ${path.join(out, "individual")}`);
   console.log(`Wrote: ${path.join(out, "Mail merge.xlsx")}`);
+  console.log(`Wrote: ${mm.filter(m => m.Attachment).length} PDFs in ${path.join(out, "pdf")}, ${mm.length} email bodies in ${path.join(out, "emails")}, and Send list.csv`);
   if (prev) console.log(`Trend vs ${prev.cycle}: up ${trends.filter(t => t.status === "Up").length}, same ${trends.filter(t => t.status === "Same").length}, down ${trends.filter(t => t.status === "Down").length}, new ${trends.filter(t => t.status === "New").length}, not in this cycle ${trends.filter(t => t.status === "Not in this cycle").length}${rulesNote ? ". " + rulesNote : ""}`);
   else console.log("Trend: no earlier cycle in history yet; this run becomes the baseline.");
   if (!o["no-save"]) console.log(`Saved this cycle for future trends: ${history.save(histDir, history.snapshot(cycle, results))}`);

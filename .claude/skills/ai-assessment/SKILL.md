@@ -86,9 +86,25 @@ Fix every problem it lists and run `--check` again until it says the judgements 
 node assessment/report.js --in "<results file>" --org "<org file>"
 ```
 
-This writes reports 1–3 of the templates to `assessment/out/`, compares with the latest earlier cycle in `assessment/history/` automatically, and saves this cycle there for future trends. Options: `--previous "<cycle name or snapshot file>"` to compare with a specific cycle; `--no-trend`; `--no-save` for test runs that must not enter the history.
+This writes reports 1–3 of the templates (individual reports and PDFs, workbook, email drafts input) to `assessment/out/`, compares with the latest earlier cycle in `assessment/history/` automatically, and saves this cycle there for future trends. Options: `--previous "<cycle name or snapshot file>"` to compare with a specific cycle; `--no-trend`; `--no-save` for test runs that must not enter the history.
 
-## 5. Write the summaries
+## 5. Prepare the result emails (drafts only)
+
+Before step 4's report run, check `assessment/email.json`: `senderName` and `signatureLines` must be filled in (ask the user), `fromMailbox` is optional, and `cc` stays empty unless the user asks (results are personal). `report.js` then also writes, in `assessment/out/`:
+- `pdf/<Employee ID> - <Name>.pdf`: the one-page report for each person (needs Chrome, Chromium or Edge; set `CHROME_PATH` if it is not found). Check that every PDF is one page.
+- `emails/<Employee ID> - <Name>.html` and `.txt`: the email body (template in `references/report-templates.md` section 3).
+- `Send list.csv` and `create-outlook-drafts.ps1`: for the surveyor's Windows PC with Outlook.
+
+To create the drafts, the surveyor copies the whole `assessment/out/` folder to the Windows PC and runs, from that folder:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\create-outlook-drafts.ps1 -Only <one test address>
+powershell -ExecutionPolicy Bypass -File .\create-outlook-drafts.ps1
+```
+
+The script **only saves drafts** in Outlook and has no send option. **Never send, and never tell the user to send, unless the user gives a separate, explicit instruction to send.** When asked to send later, confirm the cycle, the number of emails and the mailbox first.
+
+## 6. Write the summaries
 
 Using `references/report-templates.md` sections 4–6 and only numbers from `assessment/out/AI Assessment Report.xlsx`, write to `assessment/out/summaries/`:
 - `Leadership summary.md` for the CTO and senior leadership.
@@ -97,7 +113,7 @@ Using `references/report-templates.md` sections 4–6 and only numbers from `ass
 
 Include the trend against the previous cycle in each, naming both cycles.
 
-## 6. Review with the user before anything is sent
+## 7. Review with the user before anything is sent
 
 Report briefly:
 - People assessed and left out; level spread; change since the previous cycle.
@@ -105,7 +121,7 @@ Report briefly:
 - People on the **Flags** sheet, and anyone missing from the org file.
 - Suggest spot-checking about 1 in 10 examples on the **Evidence** sheet, and every Level 6 and 7 decision.
 
-Do not send emails; the surveyor sends them through Outlook after review. `assessment/out/` and `assessment/history/` hold personal data: keep them out of git and never publish or upload them.
+Do not send emails. Drafts are created only on the surveyor's PC, and sending needs a separate instruction from the user. `assessment/out/` and `assessment/history/` hold personal data: keep them out of git and never publish or upload them.
 
 ## Testing the engine with the sample data
 

@@ -1,0 +1,9 @@
+{
+  "_about": "Settings for the result emails. Fill in senderName and signatureLines before preparing emails. fromMailbox is optional: the Outlook account or shared mailbox to create drafts from (leave empty for your default account). cc is left empty on purpose: results are personal.",
+  "subject": "Your AI adoption check-in result – {cycle}",
+  "closing": "Regards,",
+  "senderName": "",
+  "signatureLines": ["AI adoption check-in team"],
+  "fromMailbox": "",
+  "cc": ""
+}

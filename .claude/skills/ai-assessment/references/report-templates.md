@@ -6,7 +6,7 @@ Every assessment cycle produces the same set of reports, in the same format, so 
 | --- | --- | --- | --- | --- |
 | 1 | Individual report | Each participant (email) | `report.js` | `out/individual/<Employee ID> - <Name>.html` |
 | 2 | Assessment workbook | Surveyor, dashboard team | `report.js` | `out/AI Assessment Report.xlsx` |
-| 3 | Mail merge | Surveyor (Outlook) | `report.js` | `out/Mail merge.xlsx` |
+| 3 | Result email + PDF, as Outlook drafts | Each participant (after review) | `report.js` + `create-outlook-drafts.ps1` | `out/pdf/`, `out/emails/`, `out/Send list.csv` |
 | 4 | Leadership summary | CTO and senior leadership | Claude | `out/summaries/Leadership summary.md` |
 | 5 | BU summary | Each director | Claude | `out/summaries/BU - <BU>.md` |
 | 6 | Team summary | Each manager and tech lead | Claude | `out/summaries/Team - <Manager or Tech lead>.md` |
@@ -52,9 +52,39 @@ What each level's report looks like (reference examples in `references/sample-re
 | Trend groups | group | Previous and current level, score, adoption, multipliers |
 | Flags, Left out, Method | — | Review lists and the rules used |
 
-## 3. Mail merge (generated)
+## 3. Result email and Outlook drafts (generated)
 
-Columns: Email, Name, Subject, Level, Score, Next step, Report file. The surveyor sends each report through Outlook after review. Claude never sends email.
+Each person gets one email with their one-page PDF attached (`out/pdf/`). The body (`out/emails/`) is generated from `assessment/email.json` and the person's result, in this fixed form:
+
+```
+Subject: Your AI adoption check-in result – <cycle>
+
+Hello <first name>,
+
+Thank you for completing the AI adoption check-in. Your result is attached as a one-page PDF.
+
+Your level: Level <N> – <name> (score <s> of 7)
+<one line on what the level means>
+[From the second cycle: Since <previous cycle>: Level <A> → Level <B> (up / down / no change).]
+
+Your next step: Level <N+1> – <name>
+You have: <practices in place at that level>.
+To qualify, also complete at least <k> of: <practices not yet in place>.
+Closest: <practice> – <what to reach, or "your example needs to show it">.
+[Level 7 instead: You have reached the top level. Keep sharing what works so others can follow.]
+
+[Only if an example needs work:] One example to strengthen: <practice>. <improve sentence>
+
+The attached report shows where you stand on every level and how your examples were assessed.
+
+If you think something is missing or wrong, reply to this email with more detail and we will review it.
+
+<closing>
+<senderName>
+<signatureLines>
+```
+
+`Send list.csv` (Email, Name, Subject, Body file, Attachment, From mailbox, Cc) feeds `create-outlook-drafts.ps1`, which saves one Outlook **draft** per person and never sends. `Mail merge.xlsx` holds the same rows for review. Sending happens only on a separate, explicit instruction from the user.
 
 ## 4. Leadership summary (Claude writes, about one page)
 

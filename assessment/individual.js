@@ -90,7 +90,12 @@ function renderIndividual(person, result, { cycle, contact, trend }) {
     next = h2("You have reached the top level") + `<div style="font-size:13px">Keep sharing what works so others can follow.</div>`;
   } else {
     const L = nextLevel;
-    const rows = [...L.have, ...L.missing].map(p => `<tr>${cell(p.confirmed ? `<span style="color:${C.ok}">✅</span>` : "⬜", "width:18px")}${cell(`<b>${esc(p.useCase)}</b>`, "width:30%")}${cell(statusShort(p), "width:28%")}${cell(fixShort(p))}</tr>`);
+    let lastFix = "";
+    const rows = [...L.have, ...L.missing].map(p => {
+      let fix = fixShort(p);
+      if (!p.confirmed) { if (fix === lastFix) fix = "Same as above."; else lastFix = fix; }
+      return `<tr>${cell(p.confirmed ? `<span style="color:${C.ok}">✅</span>` : "⬜", "width:18px")}${cell(`<b>${esc(p.useCase)}</b>`, "width:30%")}${cell(statusShort(p), "width:28%")}${cell(fix)}</tr>`;
+    });
     const closest = L.missing[0];
     next = h2(`To reach Level ${L.level} – ${esc(L.name)}: at least ${L.needed} of these ${L.total}`) +
       tbl(`<tr>${head("")}${head("Practice")}${head("Your status")}${head("What would make it count")}</tr>${rows.join("")}`) +
@@ -103,16 +108,24 @@ function renderIndividual(person, result, { cycle, contact, trend }) {
   }
 
   // 4. Examples, one line each
-  const evs = practices.filter(p => p.needsProof && p.claimed);
+  // Examples for next-level practices that did not pass are already explained
+  // in the next-level table above, so they are not repeated here.
+  const shownAbove = new Set(nextLevel ? nextLevel.missing.filter(p => p.claimed).map(p => p.id) : []);
+  const evs = practices.filter(p => p.needsProof && p.claimed && !shownAbove.has(p.id)).sort((a, b) => a.level - b.level);
+  const allEv = practices.filter(p => p.needsProof && p.claimed).length;
   let examples = "";
   if (evs.length) {
+    let lastImprove = "";
     const rows = evs.map(p => {
       const d = p.decision ? p.decision.decision : "Not assessed";
       const j = p.judgement || {};
       const icon = d === "Meets" ? `<span style="color:${C.ok}">✅ Meets</span>` : d === "Needs more evidence" ? `<span style="color:${C.warn}">⚠️ Needs more</span>` : d === "Not assessed" ? "Not assessed" : `<span style="color:${C.no}">❌ Does not meet</span>`;
+      // Repeated advice (e.g. one vague example pasted for many questions) is shown once.
+      const improve = j.improve && j.improve === lastImprove ? "Same advice as above." : (j.improve || "");
+      if (j.improve) lastImprove = j.improve;
       const text = d === "Meets" ? esc(j.reason || "")
         : j.qualityRejected ? "Too short or unclear to assess. Describe a real piece of work in a few sentences."
-        : `${missingNames(p).length ? `<b>Missing:</b> ${esc(missingNames(p).join(", "))}. ` : ""}${esc(j.improve || "")}`;
+        : `${missingNames(p).length ? `<b>Missing:</b> ${esc(missingNames(p).join(", "))}. ` : ""}${esc(improve)}`;
       return `<tr>${cell(`<b>${esc(p.useCase)}</b> <span style="color:${C.muted}">L${p.level}</span>`, "width:30%")}${cell(icon, "width:15%;white-space:nowrap")}${cell(text)}</tr>`;
     });
     examples = h2("Your examples (Levels 5–7)") + tbl(rows.join("")) +
@@ -123,7 +136,8 @@ function renderIndividual(person, result, { cycle, contact, trend }) {
     Same rules for everyone: a practice counts at C or higher for Levels 1–2 and D or higher for Levels 3–7; Levels 5–7 also need an example that shows it. Score = your level plus the share of the next level already in place.${contact ? " If something is missing, reply with more detail and we will review it." : ""}</div>`;
 
   return `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>AI adoption check-in result – ${esc(person.name)}</title></head>
+<title>AI adoption check-in result – ${esc(person.name)}</title>
+<style>@page{size:A4;margin:10mm 11mm}@media print{body{zoom:${allEv > 10 ? ".66" : allEv > 7 ? ".74" : ".82"}}}*{-webkit-print-color-adjust:exact;print-color-adjust:exact}</style></head>
 <body style="margin:0;background:#ffffff;color:${C.ink};font-family:Segoe UI,Arial,sans-serif">
 <table role="presentation" cellspacing="0" cellpadding="0" style="width:100%;max-width:760px;margin:0 auto;border-collapse:collapse"><tr><td style="padding:16px 14px">
 <div style="font-size:12px;color:${C.muted}">AI adoption check-in · ${esc(cycle || person.cycle)}</div>
@@ -133,4 +147,50 @@ ${top}${ladder}${next}${examples}${how}
 </td></tr></table></body></html>`;
 }
 
-module.exports = { renderIndividual };
+// Email body that goes with the PDF: the result, the main next step, one
+// example to strengthen, and a pointer to the attachment. Returns { subject, html, text }.
+function renderEmail(person, result, { cycle, trend, email }) {
+  const { conf, nextLevel, practices } = result;
+  const lv = conf.level, name = rules.levelNames[lv];
+  const P = s => `<p style="margin:0 0 12px">${s}</p>`;
+  const html = [], text = [];
+  const add = (h, t) => { html.push(h); text.push(t); };
+  const first = String(person.name).split(/\s+/)[0] && !/\d$/.test(person.name) ? String(person.name).split(/\s+/)[0] : person.name;
+  const plainNames = (items, conj) => items.length <= 1 ? items.join("") : `${items.slice(0, -1).join(", ")} ${conj} ${items[items.length - 1]}`;
+
+  add(P(`Hello ${esc(first)},`), `Hello ${first},`);
+  add(P("Thank you for completing the AI adoption check-in. Your result is attached as a one-page PDF."),
+    "Thank you for completing the AI adoption check-in. Your result is attached as a one-page PDF.");
+  const trendLine = trend ? `Since ${trend.cycle}: Level ${trend.prevLevel} → Level ${lv} (${trend.change > 0 ? `up ${trend.change}` : trend.change < 0 ? `down ${-trend.change}` : "no change"}).` : "";
+  add(P(`<b>Your level: Level ${lv} – ${esc(name)} (score ${conf.score.toFixed(1)} of 7)</b><br>${esc(LEVEL_LINE[lv])}${trendLine ? `<br>${esc(trendLine)}` : ""}`),
+    `Your level: Level ${lv} – ${name} (score ${conf.score.toFixed(1)} of 7)\n${LEVEL_LINE[lv]}${trendLine ? "\n" + trendLine : ""}`);
+
+  if (!nextLevel) {
+    add(P("You have reached the top level. Keep sharing what works so others can follow."), "You have reached the top level. Keep sharing what works so others can follow.");
+  } else {
+    const L = nextLevel, closest = L.missing[0];
+    const have = L.have.length ? plainNames(L.have.map(p => p.useCase), "and") : "none of these yet";
+    const from = plainNames(L.missing.map(p => p.useCase), "or");
+    const close = closest ? (closest.claimed ? `${closest.useCase}. You already do this; your example needs to show it.` : `${closest.useCase}. You are at "${closest.answerText}"; reach "${closest.barText}".`) : "";
+    add(P(`<b>Your next step: Level ${L.level} – ${esc(L.name)}</b><br>You have: ${esc(have)}.<br>To qualify, also complete at least ${L.stillNeeded} of: ${esc(from)}.${close ? `<br>Closest: ${esc(close)}` : ""}`),
+      `Your next step: Level ${L.level} – ${L.name}\nYou have: ${have}.\nTo qualify, also complete at least ${L.stillNeeded} of: ${from}.${close ? "\nClosest: " + close : ""}`);
+  }
+
+  // One example to strengthen: the one closest to passing.
+  const weak = practices.filter(p => p.needsProof && p.claimed && p.decision && p.decision.decision !== "Meets" && p.judgement && p.judgement.improve && !p.judgement.qualityRejected)
+    .sort((a, b) => (a.decision.missing.length - b.decision.missing.length) || (a.level - b.level))[0];
+  if (weak) add(P(`<b>One example to strengthen:</b> ${esc(weak.useCase)}. ${esc(weak.judgement.improve)}`), `One example to strengthen: ${weak.useCase}. ${weak.judgement.improve}`);
+
+  add(P("The attached report shows where you stand on every level and how your examples were assessed."), "The attached report shows where you stand on every level and how your examples were assessed.");
+  add(P("If you think something is missing or wrong, reply to this email with more detail and we will review it."), "If you think something is missing or wrong, reply to this email with more detail and we will review it.");
+  const sig = [email.closing || "Regards,", email.senderName, ...(email.signatureLines || [])].filter(Boolean);
+  add(P(sig.map(esc).join("<br>")), sig.join("\n"));
+
+  return {
+    subject: (email.subject || "Your AI adoption check-in result – {cycle}").replace("{cycle}", cycle),
+    html: `<div style="font-family:Segoe UI,Arial,sans-serif;font-size:14px;line-height:1.45;color:#1b1f24">${html.join("\n")}</div>`,
+    text: text.join("\n\n")
+  };
+}
+
+module.exports = { renderIndividual, renderEmail };
