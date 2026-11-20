@@ -2,7 +2,8 @@
   Outlook side of the automatic job. Run on the Windows PC that has Outlook,
   every 15 minutes (Task Scheduler). It:
     1. fetches new items from the Linux outbox over SSH (assessment/outbox/pending/),
-    2. for each item creates the email with the PDF attached and
+    2. for each item creates the email (the "result is ready" notice with the
+       personal link; an attachment only if the item has one) and
          - SENDS it only when the item says "send" AND this script was started with -AllowSend,
          - otherwise saves it as a DRAFT in Outlook,
     3. reports back (receipt.json) and moves the item to outbox/done/ on Linux.
@@ -52,14 +53,14 @@ foreach ($id in $ids) {
     $body = Join-Path $local "body.html"
     $pdf = if ($item.attachment) { Join-Path $local $item.attachment } else { "" }
     if (-not $item.email) { throw "no email address" }
-    if (-not $pdf -or -not (Test-Path $pdf)) { throw "PDF missing" }
+    if ($pdf -and -not (Test-Path $pdf)) { throw "attachment missing ($($item.attachment))" }
 
     $mail = $outlook.CreateItem(0)
     $mail.To = $item.email
     if ($item.cc) { $mail.CC = $item.cc }
     $mail.Subject = $item.subject
     $mail.HTMLBody = [System.IO.File]::ReadAllText($body, [System.Text.Encoding]::UTF8)
-    [void]$mail.Attachments.Add($pdf)
+    if ($pdf) { [void]$mail.Attachments.Add($pdf) }   # the "result is ready" notice has no attachment
     if ($item.fromMailbox) {
       $account = $null
       foreach ($a in $session.Accounts) { if ($a.SmtpAddress -eq $item.fromMailbox) { $account = $a } }

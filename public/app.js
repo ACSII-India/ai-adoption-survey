@@ -79,9 +79,9 @@
     const s = st.qset ? Scoring.score(bank, st.qset, st.answers, cfg) : null;
     const done = s ? s.answered : 0;
     $("prog").style.width = s ? (done / s.questionCount * 100) + "%" : "0%";
-    const lit = s && done ? s.cumulative : 0;
-    $("ladder").innerHTML = [1, 2, 3, 4, 5, 6, 7].map(k => `<span class="${k <= lit ? "on" : ""}" style="height:${8 + k * 3.7}px"></span>`).join("");
-    $("ladderLbl").textContent = s && done ? `Level ${s.level} so far` : "Level not yet set";
+    // No running level here: the level is set by the assessment rules after submission.
+    $("ladder").innerHTML = [1, 2, 3, 4, 5, 6, 7].map(k => `<span style="height:${8 + k * 3.7}px"></span>`).join("");
+    $("ladderLbl").textContent = s ? (st.submitted ? "Submitted" : `${done} of ${s.questionCount} answered`) : "Not started";
   }
 
   const scrollEnd = () => requestAnimationFrame(() => window.scrollTo({ top: document.body.scrollHeight, behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" }));
@@ -178,8 +178,8 @@
       scrollEnd(); return;
     }
 
-    if (step.t === "review") { el.innerHTML = resultsHTML(false); bindResults(); scrollEnd(); return; }
-    if (step.t === "done") { el.innerHTML = resultsHTML(true); bindResults(); scrollEnd(); return; }
+    if (step.t === "review") { el.innerHTML = reviewHTML(); bindReview(); scrollEnd(); return; }
+    if (step.t === "done") { renderDone(el); scrollEnd(); return; }
   }
 
   async function reviewStep(q, text, isFollowup) {
@@ -197,31 +197,81 @@
     save(); render();
   }
 
-  function resultsHTML(done) {
-    const sub = st.submitted;
-    const s = done ? sub.result : Scoring.score(bank, st.qset, st.answers, cfg);
-    let h = `<div class="panel"><h2>${done ? "Your check-in is submitted" : "Review and submit"}</h2>`;
-    h += `<div class="kpis"><div class="kpi"><div class="big">${Math.round(s.pct * 1000) / 10}%</div>Overall score (${s.total} of ${s.max})</div><div class="kpi"><div class="big">Level ${s.level}</div>${esc(s.levelName)}, level score ${Number(s.levelScore).toFixed(1)}</div><div class="kpi"><div class="big">${esc(s.tier)}</div>Provisional tier</div></div>`;
-    if (s.level >= 5) h += '<p class="hint">Level 5 and above stays provisional until a reviewer validates your examples.</p>';
-    h += '<h3>Levels</h3><div class="tw"><table><thead><tr><th>Level</th><th class="n">Questions met</th><th class="n">Met %</th><th>Status</th></tr></thead><tbody>' +
-      s.perLevel.map(p => `<tr><td>${p.level} ${esc(bank.levels[p.level - 1].name)}</td><td class="n">${p.met} of ${p.questions}</td><td class="n">${Math.round(p.pct * 100)}%</td><td>${p.level <= s.cumulative ? '<span class="yes">Met</span>' : p.pct >= cfg.threshold ? "Met, but a lower level is not" : "Not yet"}</td></tr>`).join("") + "</tbody></table></div>";
-    if (s.gaps.length) h += `<h3>To reach Level ${s.nextLevel}, use these weekly or more</h3><ul class="gap">${s.gaps.map(g => `<li>${esc(g)}</li>`).join("")}</ul>`;
-    if (done) {
-      h += `<p class="hint">Submission ${esc(sub.submissionId)}. Thank you.</p><div class="row">${cfg.resultsEmailEnabled ? `<button class="btn" id="mail" type="button">Email my results to ${esc(st.profile.email)}</button>` : ""}<button class="btn ghost" id="copy" type="button">Copy my results</button>${cfg.allowResubmit ? '<button class="btn ghost" id="again" type="button">Start a new check-in</button>' : ""}</div><p class="hint" id="mmsg" role="status"></p>`;
-    } else {
-      h += `<p class="err" id="serr" role="alert"></p><div class="row"><button class="btn" id="submit" type="button">Submit my check-in</button><button class="btn ghost" id="undo" type="button">Change my last answer</button></div>`;
-    }
-    return h + "</div>";
+  // Before submitting: no level is shown here; the result comes from the
+  // assessment rules on the server after submission.
+  function reviewHTML() {
+    const n = qs().length, ex = Object.keys(st.evidence).length;
+    return `<div class="panel"><h2>Review and submit</h2><p style="margin:0 0 10px">You have answered all ${n} questions${ex ? ` and given ${ex} example${ex > 1 ? "s" : ""}` : ""}. Submit to see your result.</p>
+      <p class="err" id="serr" role="alert"></p><div class="row"><button class="btn" id="submit" type="button">Submit my check-in</button><button class="btn ghost" id="undo" type="button">Change my last answer</button></div></div>`;
   }
 
-  function resultsText() {
-    const s = st.submitted.result, p = st.profile;
-    return ["AI adoption check-in results (" + cfg.cycle + ")", "", "Name: " + p.name, "Employee ID: " + p.empId, "Team role: " + p.teamRole,
-      "Overall score: " + Math.round(s.pct * 1000) / 10 + "% (" + s.total + " of " + s.max + ")", "Current level: Level " + s.level + " " + s.levelName + " (level score " + Number(s.levelScore).toFixed(1) + ")",
-      "Provisional tier: " + s.tier, "Submission: " + st.submitted.submissionId].concat(s.gaps.length ? ["", "To reach Level " + s.nextLevel + ":"].concat(s.gaps.map(g => "- " + g)) : []).join("\n");
+  /* ---------- result report (built on the server with the assessment rules) ---------- */
+  let pollTimer = null;
+  const resultLink = (id, r) => `${location.origin}/?result=${encodeURIComponent(id)}.${encodeURIComponent(r)}`;
+
+  async function fetchResult(id, r) {
+    const res = await fetch(`/api/result?id=${encodeURIComponent(id)}&r=${encodeURIComponent(r)}`);
+    const j = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(j.message || "Your result could not be loaded. Try again later.");
+    return j;
   }
 
-  function bindResults() {
+  function linkRow(id, r) {
+    return `<p style="margin:14px 0 4px"><b>Save this link now</b> (bookmark it, or copy it into a note or email to yourself). It opens your result from any browser, even after you close this page or clear your browser data.</p>
+      <p class="hint" style="margin:0"><code id="rlink" style="word-break:break-all">${esc(resultLink(id, r))}</code></p>
+      <div class="row"><button class="btn ghost" id="copylink" type="button">Copy link</button></div><p class="hint" id="cmsg" role="status"></p>`;
+  }
+  function bindLink(id, r) {
+    if ($("copylink")) $("copylink").onclick = async () => {
+      try { await navigator.clipboard.writeText(resultLink(id, r)); $("cmsg").textContent = "Link copied."; }
+      catch (e) { const s = window.getSelection(), g = document.createRange(); g.selectNodeContents($("rlink")); s.removeAllRanges(); s.addRange(g); $("cmsg").textContent = "Press Ctrl+C to copy the selected link."; }
+    };
+  }
+
+  function showReport(el, html, { ready, id, r }) {
+    clearInterval(pollTimer);
+    el.innerHTML = `<div class="panel">${ready ? '<p class="yes" style="font-weight:600;margin:0 0 8px" role="status">Your report is ready.</p>' : ""}
+      <h2>Your AI adoption result</h2>
+      <div class="row" style="margin-top:0"><button class="btn" id="pdf" type="button">Download PDF</button>${cfg.allowResubmit && st.submitted ? '<button class="btn ghost" id="again" type="button">Start a new check-in</button>' : ""}</div>
+      <iframe id="rep" title="Your AI adoption result" style="width:100%;min-height:900px;border:1px solid var(--rule,#d9dee5);border-radius:8px;margin-top:12px;background:#fff"></iframe>
+      ${linkRow(id, r)}</div>`;
+    const f = $("rep");
+    f.onload = () => { try { f.style.height = (f.contentDocument.documentElement.scrollHeight + 24) + "px"; } catch (e) {} };
+    f.srcdoc = html;
+    // "Download PDF" opens the browser print dialog for the report; choose "Save as PDF".
+    $("pdf").onclick = () => { try { f.contentWindow.focus(); f.contentWindow.print(); } catch (e) {} };
+    bindLink(id, r);
+    if ($("again")) $("again").onclick = () => { if (confirm("Start a new check-in? Your submitted one stays on record.")) { const p = st.profile; st = blank(); st.profile = Object.assign(p, { teamRole: "" }); save(); render(); } };
+  }
+
+  function showPending(el, { id, r }) {
+    el.innerHTML = `<div class="panel"><h2>Your check-in is submitted</h2>
+      <p style="margin:0 0 10px">Thank you. Your Level 5–7 examples are being assessed and reviewed.</p>
+      <p style="margin:0 0 10px"><b>Come back to this page later to see your detailed report.</b> When it is ready, this page shows <b>“Your report is ready”</b> with your report and a PDF to download.</p>
+      <div class="row"><button class="btn" id="check" type="button">Check now</button></div><p class="hint" id="pmsg" role="status"></p>
+      ${linkRow(id, r)}</div>`;
+    $("check").onclick = () => checkResult(el, id, r, true);
+    bindLink(id, r);
+    clearInterval(pollTimer);
+    pollTimer = setInterval(() => checkResult(el, id, r, false), 120000);
+  }
+
+  async function checkResult(el, id, r, manual) {
+    try {
+      const j = await fetchResult(id, r);
+      if (j.status === "ready" && j.html) showReport(el, j.html, { ready: true, id, r });
+      else if (manual && $("pmsg")) $("pmsg").textContent = "Not ready yet. Please check again later.";
+    } catch (e) { if (manual && $("pmsg")) $("pmsg").textContent = e.message; }
+  }
+
+  function renderDone(el) {
+    const sub = st.submitted, id = sub.submissionId, r = sub.receipt;
+    if (sub.report && !sub.report.pending && sub.report.html) return showReport(el, sub.report.html, { ready: false, id, r });
+    showPending(el, { id, r });
+    checkResult(el, id, r, false);
+  }
+
+  function bindReview() {
     if ($("undo")) $("undo").onclick = undoLast;
     if ($("submit")) $("submit").onclick = async () => {
       $("submit").disabled = true; $("serr").textContent = "";
@@ -232,15 +282,6 @@
         st.submitted = r; save(); render();
       } catch (e) { $("serr").textContent = e.message; $("submit").disabled = false; if (e.code === "verify_required") { st.verifyToken = ""; save(); render(); } }
     };
-    if ($("mail")) $("mail").onclick = async () => {
-      $("mail").disabled = true;
-      try { const r = await api("/api/email-results", { submissionId: st.submitted.submissionId, receipt: st.submitted.receipt }); $("mmsg").textContent = "Sent to " + r.sentTo + "."; }
-      catch (e) { $("mmsg").textContent = e.message; $("mail").disabled = false; }
-    };
-    if ($("copy")) $("copy").onclick = async () => {
-      try { await navigator.clipboard.writeText(resultsText()); $("copy").textContent = "Copied"; } catch (e) { $("copy").textContent = "Copy failed"; }
-    };
-    if ($("again")) $("again").onclick = () => { if (confirm("Start a new check-in? Your submitted one stays on record.")) { const p = st.profile; st = blank(); st.profile = Object.assign(p, { teamRole: "" }); save(); render(); } };
   }
 
   document.addEventListener("keydown", e => {
@@ -253,6 +294,19 @@
       const r = await fetch("/api/config"); cfg = await r.json(); bank = cfg.bank;
       $("sub").textContent = cfg.cycle + " self-assessment";
     } catch (e) { $("input").innerHTML = '<p class="err">The check-in could not load. Reload the page to try again.</p>'; return; }
+    // Personal result link: /?result=<submission ID>.<receipt>
+    const link = new URLSearchParams(location.search).get("result") || "";
+    if (link.includes(".")) {
+      const id = link.slice(0, link.indexOf(".")), r = link.slice(link.indexOf(".") + 1);
+      st = blank(); $("chat").innerHTML = ""; renderHeader(); $("ladderLbl").textContent = "Your result";
+      const el = $("input");
+      el.innerHTML = '<div class="panel"><p class="thinking" style="margin:0">Loading your result…</p></div>';
+      try {
+        const j = await fetchResult(id, r);
+        if (j.status === "ready" && j.html) showReport(el, j.html, { ready: true, id, r }); else showPending(el, { id, r });
+      } catch (e) { el.innerHTML = `<div class="panel"><p class="err" style="margin:0">${esc(e.message)}</p></div>`; }
+      return;
+    }
     try { st = Object.assign(blank(), JSON.parse(localStorage.getItem(KEY) || "{}")); } catch (e) { st = blank(); }
     if (st.qset && !bank.questionnaires[st.qset]) { st.qset = ""; st.answers = {}; st.evidence = {}; }
     render();

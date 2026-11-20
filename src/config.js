@@ -55,6 +55,9 @@ module.exports = {
   anthropicApiKey: env.ANTHROPIC_API_KEY || "",
   anthropicModel: env.ANTHROPIC_MODEL || "claude-sonnet-5-5",
 
+  // Shared secret for the assessment job to upload confirmed reports (POST /api/results/upload)
+  resultsToken: env.RESULTS_TOKEN || "",
+
   // Survey rules
   cycleName: env.CYCLE_NAME || "Baseline",
   allowResubmit: bool("ALLOW_RESUBMIT", false),

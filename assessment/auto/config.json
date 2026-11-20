@@ -1,5 +1,5 @@
 {
-  "_about": "Settings for the automatic per-submission job (assessment/auto/run-auto.js). autoSend=false means every result is prepared as an Outlook DRAFT only. Set autoSend=true only after the decision to share reports: then results with no Level 5-7 examples and no flags are marked to send, and everything else is held as a draft for review (Option B). The Windows task must also be started with -AllowSend before anything is sent. onlyEmails: when not empty, only submissions from these addresses are handled (for testing).",
+  "_about": "Settings for the automatic per-submission job (assessment/auto/run-auto.js). It judges new submissions with Claude Code headless and puts each confirmed report on the survey page (uploadReports, surveyUrl; needs the same RESULTS_TOKEN here, in assessment/auto/results-token.txt or the environment, and on Render). People see \"Your report is ready\" on the page; no email is used. notifyByEmail=false keeps the optional \"result is ready\" email off (and autoSend=false keeps any such email a draft). onlyEmails: when not empty, only submissions from these addresses are handled (for testing).",
   "autoSend": false,
   "onlyEmails": [
     "sjavalekar@acsi-india.org"
@@ -8,5 +8,8 @@
   "orgFile": "",
   "maxPeoplePerRun": 15,
   "claudePath": "",
-  "claudeTimeoutMinutes": 20
+  "claudeTimeoutMinutes": 20,
+  "uploadReports": true,
+  "surveyUrl": "https://ai-adoption-survey.onrender.com",
+  "notifyByEmail": false
 }

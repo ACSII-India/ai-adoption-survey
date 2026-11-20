@@ -14,6 +14,11 @@ const { createStore } = require("./store");
 const { reviewEvidence } = require("./claude");
 const mail = require("./mailer");
 const auth = require("./auth");
+const results = require("./results");
+// The assessment engine (same rules as the one-time assessment) builds the
+// report shown on the final page.
+const assess = require("../assessment/lib.js");
+const { renderIndividual } = require("../assessment/individual.js");
 
 const store = createStore();
 const app = express();
@@ -174,7 +179,19 @@ app.post("/api/submit", limiter(60, 10), async (req, res) => {
     console.error("submit failed:", e.message);
     return fail(res, 502, "save_failed", "Your answers could not be saved right now. Keep this page open and try Submit again in a minute.");
   }
-  res.json({ submissionId, receipt: hmac(`receipt|${submissionId}`), result: s, questionnaire: bank.questionnaires[qset].name, examples: evidenceRows.map(e => ({ questionId: e["Question ID"], useCase: e["Use case"], rating: e["AI rating"], summary: e["AI summary"] })) });
+  // Result report with the assessment rules. Level 5-7 examples need the
+  // Claude check first, so those reports arrive later from the assessment job.
+  let report = { pending: true, html: null };
+  try {
+    const person = { submissionId, empId: profile.empId, name: profile.name, email: profile.email, department: "", teamRole: profile.teamRole,
+      qset, role: bank.questionnaires[qset].name, cycle: config.cycleName, questions: qs, answers,
+      evidence: evidenceRows.map(e => ({ key: `${profile.empId}|${e["Question ID"]}`, questionId: e["Question ID"], level: e.Level, useCase: e["Use case"],
+        question: (qs.find(q => q.id === e["Question ID"]) || {}).text, answer: e.Answer, example: e.Example, followupQ: e["Follow-up question"], followupA: e["Follow-up answer"] })) };
+    const ar = assess.score(person, {});
+    if (ar.practices.some(p => p.needsProof && p.claimed)) results.setPending(submissionId);
+    else { report = { pending: false, html: renderIndividual(person, ar, { cycle: config.cycleName, contact: false }) }; results.setReady(submissionId, report.html, "survey"); }
+  } catch (e) { console.error("report failed:", e.message); results.setPending(submissionId); }
+  res.json({ submissionId, receipt: hmac(`receipt|${submissionId}`), report, result: s, questionnaire: bank.questionnaires[qset].name, examples: evidenceRows.map(e => ({ questionId: e["Question ID"], useCase: e["Use case"], rating: e["AI rating"], summary: e["AI summary"] })) });
 });
 
 function resultsEmail(r) {
@@ -190,6 +207,40 @@ function resultsEmail(r) {
 ${Number(r["Current level"]) >= 5 ? "<p>Level 5 and above stays provisional until a reviewer validates your examples.</p>" : ""}
 <p style="color:#45525C">Submission ${esc(r["Submission ID"])}, submitted ${esc(String(r["Submitted at (UTC)"]).slice(0, 10))}.</p></div>`;
 }
+
+// Participant: is my report ready? (receipt from the submit response or the personal link)
+app.get("/api/result", limiter(10, 120), (req, res) => {
+  const id = str(req.query.id, 20), r = str(req.query.r, 100);
+  if (!id || !safeEq(r, hmac(`receipt|${id}`))) return fail(res, 403, "bad_receipt", "This results link is not valid.");
+  const e = results.get(id);
+  res.json(e && e.status === "ready" ? { status: "ready", html: e.html } : { status: "pending" });
+});
+
+// Assessment job: upload confirmed reports, and list which ones Render already has.
+// Needs RESULTS_TOKEN on the server; without it these routes are switched off.
+function jobAuth(req, res, next) {
+  const t = (req.get("Authorization") || "").replace(/^Bearer\s+/i, "");
+  if (!config.resultsToken || !safeEq(t, config.resultsToken)) return fail(res, 401, "unauthorized", "Not allowed.");
+  next();
+}
+app.get("/api/results/ready", jobAuth, (req, res) => res.json({ ready: results.readyIds() }));
+app.post("/api/results/upload", jobAuth, (req, res) => {
+  const id = str(req.body.submissionId, 20), html = typeof req.body.html === "string" ? req.body.html : "";
+  if (!/^S-[A-Z0-9]{6,12}$/.test(id) || !html || html.length > 150000) return fail(res, 400, "bad_request", "submissionId and html are required.");
+  results.setReady(id, html, "assessment");
+  res.json({ ok: true, link: resultLinkFor(id) });
+});
+
+// Personal result link (same one the participant sees after submitting).
+function resultLinkFor(id) { return `${config.baseUrl}/?result=${id}.${hmac(`receipt|${id}`)}`; }
+
+// Admin and reviewers: report status and the personal link, to send to someone who lost it.
+app.get("/admin/api/result-link", auth.requireReviewer, (req, res) => {
+  const id = str(req.query.id, 20);
+  if (!/^S-[A-Z0-9]{6,12}$/.test(id)) return fail(res, 400, "bad_request", "Unknown submission.");
+  const e = results.get(id);
+  res.json({ status: e && e.status === "ready" ? "ready" : "pending", link: resultLinkFor(id) });
+});
 
 app.post("/api/email-results", limiter(60, 5), async (req, res) => {
   if (!config.resultsEmailEnabled) return fail(res, 400, "disabled", "Results email is turned off.");

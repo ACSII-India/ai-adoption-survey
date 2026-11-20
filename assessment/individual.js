@@ -133,7 +133,7 @@ function renderIndividual(person, result, { cycle, contact, trend }) {
   }
 
   const how = `<div style="font-size:11.5px;color:${C.muted};margin-top:14px;border-top:1px solid ${C.rule};padding-top:8px">
-    Same rules for everyone: a practice counts at C or higher for Levels 1–2 and D or higher for Levels 3–7; Levels 5–7 also need an example that shows it. Score = your level plus the share of the next level already in place.${contact ? " If something is missing, reply with more detail and we will review it." : ""}</div>`;
+    Same rules for everyone: a practice counts at C or higher for Levels 1–2 and D or higher for Levels 3–7; Levels 5–7 also need an example that shows it. Score = your level plus the share of the next level already in place.${contact ? " If something is missing, tell the survey team and we will review it." : ""}</div>`;
 
   return `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>AI adoption check-in result – ${esc(person.name)}</title>
@@ -193,4 +193,27 @@ function renderEmail(person, result, { cycle, trend, email }) {
   };
 }
 
-module.exports = { renderIndividual, renderEmail };
+// Short "your result is ready" notice with the personal link (the report
+// itself stays on the survey page). Returns { subject, html, text }.
+function renderNotice(person, { cycle, link, email, level }) {
+  const first = !/\d$/.test(person.name) ? String(person.name).split(/\s+/)[0] : person.name;
+  const sig = [email.closing || "Regards,", email.senderName, ...(email.signatureLines || [])].filter(Boolean);
+  const lines = [
+    `Hello ${first},`,
+    `Your AI adoption check-in result for ${cycle} is ready.`,
+    `Open your result: ${link}`,
+    "The page shows your level, where you stand on each level, what would take you to the next one, and a PDF you can download. Keep this email: the link works from any browser.",
+    "If you think something is missing, tell the survey team and we will review it."
+  ];
+  const P = s => `<p style="margin:0 0 12px">${s}</p>`;
+  const html = [P(esc(lines[0])), P(esc(lines[1])),
+    P(`<a href="${esc(link)}" style="display:inline-block;background:#1f3864;color:#fff;text-decoration:none;padding:9px 16px;border-radius:6px;font-weight:600">Open my result</a>`),
+    P(`<span style="font-size:12px;color:#5b6470">Or copy this link: ${esc(link)}</span>`), P(esc(lines[3])), P(esc(lines[4])), P(sig.map(esc).join("<br>"))].join("\n");
+  return {
+    subject: `Your AI adoption check-in result is ready – ${cycle}`,
+    html: `<div style="font-family:Segoe UI,Arial,sans-serif;font-size:14px;line-height:1.45;color:#1b1f24">${html}</div>`,
+    text: [...lines, sig.join("\n")].join("\n\n"), level
+  };
+}
+
+module.exports = { renderIndividual, renderEmail, renderNotice };

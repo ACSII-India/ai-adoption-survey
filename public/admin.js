@@ -81,12 +81,28 @@
     if (!r) { box.innerHTML = ""; return; }
     const answers = Object.keys(r).filter(k => /^[RC]\d\d$/.test(k)).map(k => `<td>${k}: <strong>${esc(r[k])}</strong></td>`);
     let h = `<div class="panel"><h2>${esc(r.Name)}</h2><p class="hint" style="margin-top:0">Employee ID ${esc(r["Respondent ID (Employee ID)"])}, ${esc(r.Email)}${r.Department ? ", " + esc(r.Department) : ""}<br>${esc(r["Team role"])}, ${esc(r.Role)} questionnaire. Score ${esc(r["Score %"])}%, Level ${esc(r["Current level"])} ${esc(r["Level name"])} (${esc(r["Level score"])}), ${esc(r["Provisional tier"])}. Submitted ${esc(String(r["Submitted at (UTC)"]).slice(0, 16).replace("T", " "))} UTC. Status: ${esc(r.Status)}.</p>`;
+    h += `<h3>Result report</h3><div id="rlinkbox"><p class="hint">Loading…</p></div>`;
     const evs = evFor(sel);
     if (evs.length) h += "<h3>Evidence</h3>" + evs.map(evCard).join("");
     h += `<h3>Answers</h3><div class="tw"><table><tbody>${[0, 10, 20].map(i => `<tr>${answers.slice(i, i + 10).join("")}</tr>`).join("")}</tbody></table></div>`;
     if (me.role === "admin") h += `<div class="row">${r.Status === "Deleted" ? '<button class="btn ghost" id="restore" type="button">Restore this response</button>' : '<button class="btn ghost" id="del" type="button">Mark as deleted</button>'}<span class="hint">Admin only. The row stays in the Excel file with status Deleted.</span></div>`;
     box.innerHTML = h + "</div>";
     bindReviews(box);
+    // Report status and the personal link, for someone who lost theirs.
+    (async () => {
+      const lb = $("rlinkbox"); if (!lb) return;
+      try {
+        const res = await fetch(`/admin/api/result-link?id=${encodeURIComponent(sel)}`); const j = await res.json();
+        if (!res.ok) throw new Error(j.message || "Could not load the result link.");
+        lb.innerHTML = `<p style="margin:0 0 6px">${j.status === "ready" ? '<span class="yes">Ready</span>: the person sees their report at this link.' : "Waiting for the example review: the link shows a “being assessed” message until the report is ready."}</p>
+          <p class="hint" style="margin:0 0 6px"><code id="rlinktext" style="word-break:break-all">${esc(j.link)}</code></p>
+          <div class="row" style="margin-top:0"><button class="btn ghost" id="copyrlink" type="button">Copy result link</button><span class="hint" id="rlinkmsg" role="status"></span></div>`;
+        $("copyrlink").onclick = async () => {
+          try { await navigator.clipboard.writeText(j.link); $("rlinkmsg").textContent = "Copied. Send it to the person by Teams or email."; }
+          catch (e) { const s = getSelection(), g = document.createRange(); g.selectNodeContents($("rlinktext")); s.removeAllRanges(); s.addRange(g); $("rlinkmsg").textContent = "Press Ctrl+C to copy."; }
+        };
+      } catch (e) { lb.innerHTML = `<p class="err">${esc(e.message)}</p>`; }
+    })();
     const setStatus = async status => { try { await post("/admin/api/status", { submissionId: sel, status }); await load(); } catch (e) { alert(e.message); } };
     if ($("del")) $("del").onclick = () => { if (confirm(`Mark the response from ${r.Name} as deleted?`)) setStatus("Deleted"); };
     if ($("restore")) $("restore").onclick = () => setStatus("Submitted");
