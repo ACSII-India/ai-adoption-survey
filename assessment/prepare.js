@@ -44,7 +44,11 @@ async function main() {
   if (!o.in) { console.error("Usage: node assessment/prepare.js --in <results.xlsx> [--out assessment/out] [--batch 20]"); process.exit(1); }
   const out = path.resolve(o.out || path.join(__dirname, "out"));
   const size = Math.max(1, Number(o.batch) || 20);
-  const { people, skipped, cycle } = await loadResults(path.resolve(o.in));
+  const loaded = await loadResults(path.resolve(o.in));
+  // --only <id,id,...>: assess just these employee IDs (used by the automatic job).
+  const only = o.only ? new Set(String(o.only).split(",").map(s => s.trim().toLowerCase()).filter(Boolean)) : null;
+  const people = only ? loaded.people.filter(p => only.has(p.empId.toLowerCase())) : loaded.people;
+  const { skipped, cycle } = loaded;
   const lookFor = lookForLines();
 
   fs.rmSync(path.join(out, "batches"), { recursive: true, force: true });

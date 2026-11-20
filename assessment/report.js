@@ -166,7 +166,11 @@ async function main() {
   } else console.log("Judgements: all present and valid.");
   if (o.check) return;
 
-  const { people, skipped, cycle } = await loadResults(path.resolve(o.in));
+  const loaded = await loadResults(path.resolve(o.in));
+  // --only <id,id,...>: assess just these employee IDs (used by the automatic job).
+  const only = o.only ? new Set(String(o.only).split(",").map(s => s.trim().toLowerCase()).filter(Boolean)) : null;
+  const people = only ? loaded.people.filter(p => only.has(p.empId.toLowerCase())) : loaded.people;
+  const { skipped, cycle } = loaded;
   const org = await loadOrg(o.org ? path.resolve(o.org) : null);
   const notInOrg = [];
   const results = people.map(p => {

@@ -1,0 +1,8 @@
+[Unit]
+Description=AI adoption survey: assess new submissions and queue result emails
+After=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=%h/PROJECTS/ai-adoption-survey/assessment/auto/run-auto.sh
+TimeoutStartSec=45min
