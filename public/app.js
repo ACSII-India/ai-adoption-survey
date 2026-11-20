@@ -98,14 +98,19 @@
     const undoBtn = Object.keys(st.answers).length ? '<button class="btn ghost" id="undo" type="button">Change my last answer</button>' : "";
 
     if (step.t === "profile") {
+      // A fixed department list (data/questions.json "departments") keeps names
+      // consistent for reporting; without one, the field is free text.
+      const depts = Array.isArray(bank.departments) ? bank.departments : [];
       const domains = cfg.allowedEmailDomains.length ? ` (${cfg.allowedEmailDomains.map(d => "@" + d).join(" or ")})` : "";
       el.innerHTML = `<div class="panel"><div class="grid2f">
         <div><label class="f" for="nm">Name</label><input id="nm" autocomplete="name" maxlength="100"></div>
         <div><label class="f" for="eid">Employee ID</label><input id="eid" maxlength="40"></div>
         <div><label class="f" for="em">Work email${esc(domains)}</label><input id="em" type="email" autocomplete="email" maxlength="200"></div>
-        <div><label class="f" for="dp">Department</label><input id="dp" maxlength="80"></div></div>
+        <div><label class="f" for="dp">Department</label>${depts.length
+          ? `<select id="dp"><option value="">Choose your department</option>${depts.map(d => `<option>${esc(d)}</option>`).join("")}</select>`
+          : '<input id="dp" maxlength="80">'}</div></div>
         <p class="err" id="perr" role="alert"></p><div class="row"><button class="btn" id="go" type="button">Continue</button></div></div>`;
-      const p = st.profile; $("nm").value = p.name; $("eid").value = p.empId; $("em").value = p.email; $("dp").value = p.dept;
+      const p = st.profile; $("nm").value = p.name; $("eid").value = p.empId; $("em").value = p.email; $("dp").value = !depts.length || depts.includes(p.dept) ? p.dept : "";
       $("go").onclick = () => {
         const v = { name: $("nm").value.trim(), empId: $("eid").value.trim(), email: $("em").value.trim().toLowerCase(), dept: $("dp").value.trim() };
         const dom = v.email.split("@")[1] || "";
@@ -113,7 +118,7 @@
           : !/^[A-Za-z0-9._-]{2,40}$/.test(v.empId) ? ["eid", "Enter your employee ID (letters, digits, dot, dash, or underscore)."]
           : !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.email) ? ["em", "Enter a valid email address."]
           : (cfg.allowedEmailDomains.length && !cfg.allowedEmailDomains.includes(dom)) ? ["em", "Use your work email address."]
-          : !v.dept ? ["dp", "Enter your department."] : null;
+          : !v.dept ? ["dp", depts.length ? "Choose your department." : "Enter your department."] : null;
         if (bad) { $("perr").textContent = bad[1]; $(bad[0]).focus(); return; }
         if (v.email !== st.profile.email) st.verifyToken = "";
         Object.assign(st.profile, v); save(); render();

@@ -71,6 +71,19 @@ async function main() {
   const responses = readSheet(wb, "Responses");
   const evidence = readSheet(wb, "Evidence");
 
+  // Group departments that differ only in case, spacing or trailing
+  // punctuation ("Central Function." = "central  function"). Names from the
+  // department list win; otherwise the first spelling seen is used.
+  const deptKey = d => String(d).toLowerCase().replace(/[\s.,;:\-_]+$/g, "").replace(/\s+/g, " ").trim();
+  const canon = new Map((bank.departments || []).map(d => [deptKey(d), d]));
+  responses.forEach(r => {
+    const k = deptKey(r.Department || "");
+    if (!k) return;
+    if (!canon.has(k)) canon.set(k, String(r.Department).trim().replace(/[\s.,;:\-_]+$/g, ""));
+    r.Department = canon.get(k);
+  });
+  evidence.forEach(e => { const k = deptKey(e.Department || ""); if (canon.has(k)) e.Department = canon.get(k); });
+
   const active = responses.filter(r => !["Deleted", "Superseded"].includes(r.Status));
   const activeIds = new Set(active.map(r => r["Submission ID"]));
   const ev = evidence.filter(e => activeIds.has(e["Submission ID"]));
