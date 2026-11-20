@@ -148,6 +148,7 @@ class ExcelStore {
   // Assessment tabs are written only for the local Excel file (trial mode) so far.
   async saveAssessment() { return false; }
   async listAssessmentEvidence() { return []; }
+  async mergeFrom() { return false; }
   async download() { return this.graph.raw(`${this.item}/content`); }
   async webUrl() { return (await this.graph.get(`${this.item}?$select=webUrl`)).webUrl; }
 }
@@ -263,6 +264,39 @@ class LocalFileStore {
 
   async getSubmission(submissionId) {
     return (await this.listResponses()).find(r => r["Submission ID"] === submissionId) || null;
+  }
+
+  // After a restart that lost the file: rebuild it from a backup copy, keeping
+  // anything submitted since the restart. Rows are matched by Submission ID
+  // (and Question ID for examples); nothing already in the backup is overwritten.
+  mergeFrom(buffer) {
+    return this.serial(async () => {
+      const base = new ExcelJS.Workbook();
+      await base.xlsx.load(buffer);
+      const cur = await this.load();
+      const keys = { "Responses": ["Submission ID"], "Evidence": ["Submission ID", "Question ID"],
+        "Assessment": ["Submission ID"], "Assessment evidence": ["Submission ID", "Question ID"] };
+      const head = ws => (ws.getRow(1).values || []).slice(1).map(v => String(this.clean(v)));
+      let added = 0;
+      for (const [name, k] of Object.entries(keys)) {
+        const from = cur.getWorksheet(name);
+        if (!from) continue;
+        const fh = head(from);
+        let to = base.getWorksheet(name);
+        if (!to) { to = base.addWorksheet(name); fh.forEach((h, i) => { to.getRow(1).getCell(i + 1).value = h; }); }
+        const th = head(to);
+        for (const h of fh) if (!th.includes(h)) { th.push(h); to.getRow(1).getCell(th.length).value = h; }
+        const have = new Set(this.rows(to, th).map(r => k.map(x => r[x]).join("|")));
+        for (const r of this.rows(from, fh)) {
+          const id = k.map(x => r[x]).join("|");
+          if (!have.has(id)) { this.appendRow(to, th, r); have.add(id); added++; }
+        }
+      }
+      this.ensureSheet(base, "Responses", RESPONSE_HEADERS);
+      this.ensureSheet(base, "Evidence", EVIDENCE_HEADERS);
+      await this.save(base);
+      return { added, responses: base.getWorksheet("Responses").actualRowCount - 1 };
+    });
   }
 
   // Rows of the "Assessment evidence" tab for one submission (judgements included).
@@ -392,6 +426,7 @@ class MemoryStore {
   }
   async saveAssessment() { return false; }
   async listAssessmentEvidence() { return []; }
+  async mergeFrom() { return false; }
   async download() { return null; }
   async webUrl() { return ""; }
 }

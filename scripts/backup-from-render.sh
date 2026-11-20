@@ -51,6 +51,21 @@ if [ "$code" != "200" ] || [ ! -s "$file" ] || [ "$(head -c2 "$file")" != "PK" ]
   exit 0
 fi
 
+# Render restarted and lost submissions we already had? Send the previous copy
+# back (Render merges it with anything submitted since) and keep the previous
+# copy as the latest; the next run downloads the restored file.
+if [ -s "$HOME/.nvm/nvm.sh" ]; then
+  # shellcheck disable=SC1091
+  . "$HOME/.nvm/nvm.sh" >/dev/null && nvm use --silent 22 >/dev/null || true
+fi
+if command -v node >/dev/null && [ -d "$PROJECT_DIR/node_modules/exceljs" ] && [ -f "$LATEST" ]; then
+  set +e
+  msg="$(RENDER_URL="$RENDER_URL" node "$PROJECT_DIR/scripts/restore-if-needed.js" "$file" "$LATEST" 2>&1)"; rc=$?
+  set -e
+  if [ $rc -eq 10 ]; then log "$msg"; exit 0; fi
+  if [ $rc -ne 0 ]; then log "${msg:-RESTORE check failed}"; fi
+fi
+
 if [ -f "$LATEST" ] && cmp -s "$file" "$LATEST"; then
   log "OK unchanged"
   exit 0

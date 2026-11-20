@@ -277,6 +277,19 @@ app.post("/api/results/upload", jobAuth, async (req, res) => {
   res.json({ ok: true, link: resultLinkFor(id), savedToWorkbook: saved });
 });
 
+// Backup job: put the results workbook back after a restart lost it. The
+// backup copy is merged with anything submitted since the restart.
+app.post("/api/results/restore-workbook", jobAuth, express.raw({ type: "application/octet-stream", limit: "10mb" }), async (req, res) => {
+  if (!Buffer.isBuffer(req.body) || req.body.length < 100 || req.body.subarray(0, 2).toString() !== "PK")
+    return fail(res, 400, "bad_request", "An .xlsx file is required.");
+  try {
+    const r = await store.mergeFrom(req.body);
+    if (r === false) return fail(res, 501, "not_supported", "Restoring is only needed for the local results file.");
+    console.log(`results workbook restored from backup: ${r.responses} responses, ${r.added} rows kept from after the restart`);
+    res.json({ ok: true, ...r });
+  } catch (e) { console.error("restore failed:", e.message); fail(res, 500, "restore_failed", "The backup could not be restored."); }
+});
+
 // Personal result link (same one the participant sees after submitting).
 function resultLinkFor(id) { return `${config.baseUrl}/?result=${id}.${hmac(`receipt|${id}`)}`; }
 
