@@ -93,10 +93,10 @@ This writes reports 1–3 of the templates (individual reports and PDFs, workboo
 Before step 4's report run, check `assessment/email.json`: `senderName` and `signatureLines` must be filled in (ask the user), `fromMailbox` is optional, and `cc` stays empty unless the user asks (results are personal). `report.js` then also writes, in `assessment/out/`:
 - `pdf/<Employee ID> - <Name>.pdf`: the one-page report for each person (needs Chrome, Chromium or Edge; set `CHROME_PATH` if it is not found). Check that every PDF is one page.
 - `emails/<Employee ID> - <Name>.html` and `.txt`: the email body (template in `references/report-templates.md` section 3).
-- `eml/<Employee ID> - <Name>.eml`: the complete email (recipient, subject, body, PDF attached), marked unsent. Opened on Windows, Outlook shows it as a new message with a Send button; nothing is sent until someone presses Send.
+- `eml/<Employee ID> - <Name>.eml`: a **preview** of the complete email (recipient, subject, body, PDF attached), marked unsent, so the surveyor can see exactly how a report will look in Outlook. These are for review only, not for sending to individuals.
 - `Send list.csv` and `Mail merge.xlsx`: the same emails as a list, for review and for the automatic job.
 
-The surveyor copies the `eml/` folder to the Windows PC and opens each file in Outlook to check and send it. **Never send, and never tell the user to send, unless the user gives a separate, explicit instruction to send.** When asked to send later, confirm the cycle, the number of emails and the mailbox first.
+The surveyor opens an .eml in Outlook to preview it. How reports reach individuals is decided separately (see the automatic job in `assessment/auto/`). **Never send, and never tell the user to send, unless the user gives a separate, explicit instruction to send.** When asked to send later, confirm the cycle, the number of emails and the mailbox first.
 
 ## 6. Write the summaries
 
