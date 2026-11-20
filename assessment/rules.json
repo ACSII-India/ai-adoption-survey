@@ -1,0 +1,43 @@
+{
+  "_about": "Scoring thresholds for the AI adoption assessment. RUBRIC.md explains each rule in plain words; keep the two in step. Raise 'version' whenever a rule, threshold or checklist changes, so trend reports can tell rule changes from real change.",
+  "version": "1.0",
+
+  "practiceCountsAt": { "1": "C", "2": "C", "3": "D", "4": "D", "5": "D", "6": "D", "7": "D" },
+  "levelReachedWhen": "at least half of the level's practices count (rounded up: 1 of 2, 2 of 3, 2 of 4, 3 of 6)",
+  "evidenceLevels": [5, 6, 7],
+
+  "levelNames": {
+    "0": "Not started", "1": "Aware", "2": "Exploring", "3": "Practicing",
+    "4": "Proficient", "5": "Advanced", "6": "Multiplier", "7": "Transformer"
+  },
+
+  "evidenceCriteria": {
+    "5": ["TASK", "AGENTIC", "CHECKED", "REPEATED"],
+    "6": ["SHARED", "USERS", "WHERE", "IMPACT"],
+    "7": ["BEFORE_AFTER", "ADOPTED", "MEASURED", "OWNED"]
+  },
+  "evidenceExtraForE": { "5": "REUSABLE", "6": "STANDARD", "7": "BEYOND_TEAM" },
+  "decision": {
+    "meets": "all must-have criteria present and not lower-level use",
+    "needsMoreEvidence": "exactly one must-have criterion missing",
+    "doesNotMeet": "two or more missing, lower-level use, or rejected by the quality filter"
+  },
+
+  "qualityFilter": {
+    "minRealWords": 12,
+    "maxShareOfJunkWords": 0.4
+  },
+
+  "groups": {
+    "minPeopleForGroupLevel": 5,
+    "minCoverageForGroupLevel": 0.6
+  },
+
+  "flags": {
+    "sameAnswerShare": 0.9,
+    "ladderJumpMinHighClaims": 2
+  },
+
+  "excludeNamePrefixes": ["TEST - "],
+  "excludeStatuses": ["Deleted", "Superseded"]
+}

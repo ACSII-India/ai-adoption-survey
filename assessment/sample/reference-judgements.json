@@ -1,0 +1,1328 @@
+[
+  {
+    "key": "SMP003|QA-R13",
+    "criteria": {
+      "TASK": {
+        "met": true,
+        "quote": "Selenium tests break because a locator changed"
+      },
+      "AGENTIC": {
+        "met": false,
+        "quote": ""
+      },
+      "CHECKED": {
+        "met": false,
+        "quote": ""
+      },
+      "REPEATED": {
+        "met": true,
+        "quote": "maybe once or twice a month"
+      }
+    },
+    "lowerLevel": true,
+    "reason": "Fixes broken locators by pasting errors into a chat assistant; the tests do not repair themselves and the fix is not checked.",
+    "improve": "This describes chat help. Self-healing means the framework or an agent updates locators during runs and you review the changes, e.g. \"Our Playwright suite uses an AI healer in nightly runs; I review its locator changes in the PR each week.\""
+  },
+  {
+    "key": "SMP005|TL-R12",
+    "criteria": {
+      "TASK": {
+        "met": true,
+        "quote": "well-scoped tickets (test backfill, small API changes) go to Devin"
+      },
+      "AGENTIC": {
+        "met": true,
+        "quote": "go to Devin and the rest to the team"
+      },
+      "CHECKED": {
+        "met": true,
+        "quote": "I review every Devin PR with the owning developer before it merges"
+      },
+      "REPEATED": {
+        "met": true,
+        "quote": "Each sprint I split our backlog"
+      }
+    },
+    "lowerLevel": false,
+    "reason": "Splits each sprint's work between the team and Devin and reviews every agent PR before it merges."
+  },
+  {
+    "key": "SMP005|TL-R14",
+    "criteria": {
+      "TASK": {
+        "met": true,
+        "quote": "drafts sprint goals and flags stories with missing acceptance criteria"
+      },
+      "AGENTIC": {
+        "met": true,
+        "quote": "I connected Claude to our Jira project"
+      },
+      "CHECKED": {
+        "met": false,
+        "quote": ""
+      },
+      "REPEATED": {
+        "met": false,
+        "quote": ""
+      }
+    },
+    "lowerLevel": false,
+    "reason": "Uses Claude connected to Jira to prepare sprint planning, but does not say how often or how the drafts and flags are checked.",
+    "improve": "Add how often you do this and how you check Claude's output, e.g. \"Before every sprint planning I go through the flagged stories with the product owner and correct the sprint goal.\""
+  },
+  {
+    "key": "SMP006|DEV-R12",
+    "criteria": {
+      "TASK": {
+        "met": true,
+        "quote": "hand two or three scoped Jira tickets to Devin"
+      },
+      "AGENTIC": {
+        "met": true,
+        "quote": "tickets to Devin"
+      },
+      "CHECKED": {
+        "met": true,
+        "quote": "review its pull request line by line and run the integration tests"
+      },
+      "REPEATED": {
+        "met": true,
+        "quote": "Each sprint"
+      }
+    },
+    "lowerLevel": false,
+    "reason": "Delegates scoped Jira tickets to Devin every sprint and reviews and tests the pull requests before merging."
+  },
+  {
+    "key": "SMP006|DEV-R13",
+    "criteria": {
+      "TASK": {
+        "met": true,
+        "quote": "move our logging to the new library across 14 services"
+      },
+      "AGENTIC": {
+        "met": true,
+        "quote": "Used Claude Code to move our logging … in one change"
+      },
+      "CHECKED": {
+        "met": true,
+        "quote": "checked it with the full test suite and a staging run"
+      },
+      "REPEATED": {
+        "met": true,
+        "quote": "Done for two migrations so far"
+      }
+    },
+    "lowerLevel": false,
+    "reason": "Used Claude Code for multi-service migrations and verified them with the test suite and staging."
+  },
+  {
+    "key": "SMP006|DEV-R14",
+    "criteria": {
+      "TASK": {
+        "met": true,
+        "quote": "I created /review-pr and /gen-tests commands"
+      },
+      "AGENTIC": {
+        "met": true,
+        "quote": "commands in Claude Code for our repo"
+      },
+      "CHECKED": {
+        "met": false,
+        "quote": ""
+      },
+      "REPEATED": {
+        "met": true,
+        "quote": "Quite often"
+      }
+    },
+    "extra": {
+      "REUSABLE": {
+        "met": true,
+        "quote": "/review-pr and /gen-tests commands"
+      }
+    },
+    "lowerLevel": false,
+    "reason": "Built custom review and test commands and uses them often, but does not say how their output is checked.",
+    "improve": "Add how you check what the commands produce, e.g. \"I run /review-pr on every PR and compare it with the human review.\""
+  },
+  {
+    "key": "SMP006|DEV-R15",
+    "criteria": {
+      "TASK": {
+        "met": true,
+        "quote": "pull acceptance criteria into the task and update the ticket"
+      },
+      "AGENTIC": {
+        "met": true,
+        "quote": "connected to Jira and Confluence through MCP"
+      },
+      "CHECKED": {
+        "met": true,
+        "quote": "I check the ticket before saving"
+      },
+      "REPEATED": {
+        "met": true,
+        "quote": "Every sprint"
+      }
+    },
+    "lowerLevel": false,
+    "reason": "Uses Claude Code connected to Jira and Confluence through MCP every sprint and checks the ticket updates."
+  },
+  {
+    "key": "SMP006|DEV-R17",
+    "criteria": {
+      "SHARED": {
+        "met": true,
+        "quote": "a prompt and context-file library"
+      },
+      "USERS": {
+        "met": true,
+        "quote": "Four colleagues use it"
+      },
+      "WHERE": {
+        "met": true,
+        "quote": "in the team repo (docs/ai-prompts)"
+      },
+      "IMPACT": {
+        "met": true,
+        "quote": "new joiners now start from it"
+      }
+    },
+    "lowerLevel": false,
+    "reason": "Maintains a shared prompt library in the team repository that four colleagues use, including for onboarding."
+  },
+  {
+    "key": "SMP007|DE-R12",
+    "criteria": {
+      "TASK": {
+        "met": true,
+        "quote": "rewrite 40 dbt models from the old schema to the new one"
+      },
+      "AGENTIC": {
+        "met": true,
+        "quote": "I had a Claude Code agent rewrite 40 dbt models"
+      },
+      "CHECKED": {
+        "met": true,
+        "quote": "compared row counts and checksums for every model in staging"
+      },
+      "REPEATED": {
+        "met": true,
+        "quote": "I use the same approach for each schema change"
+      }
+    },
+    "lowerLevel": false,
+    "reason": "Uses an agent for multi-model schema migrations and verifies them with row counts and checksums."
+  },
+  {
+    "key": "SMP007|DE-R13",
+    "criteria": {
+      "TASK": {
+        "met": true,
+        "quote": "look up lineage and draft queries"
+      },
+      "AGENTIC": {
+        "met": true,
+        "quote": "connected to our data catalog and Snowflake through MCP"
+      },
+      "CHECKED": {
+        "met": true,
+        "quote": "I check the results against the catalog definitions"
+      },
+      "REPEATED": {
+        "met": true,
+        "quote": "Every day I use it"
+      }
+    },
+    "extra": {
+      "REUSABLE": {
+        "met": true,
+        "quote": "I have a saved command for the daily lineage check"
+      }
+    },
+    "lowerLevel": false,
+    "reason": "Works daily with Claude connected to the catalog and warehouse through MCP and checks results against definitions."
+  },
+  {
+    "key": "SMP007|DE-R14",
+    "criteria": {
+      "TASK": {
+        "met": true,
+        "quote": "reads failed data quality checks each night, groups them by likely cause"
+      },
+      "AGENTIC": {
+        "met": true,
+        "quote": "An AI triage job … posts a summary to our Teams channel"
+      },
+      "CHECKED": {
+        "met": true,
+        "quote": "I review the grouping each morning"
+      },
+      "REPEATED": {
+        "met": true,
+        "quote": "it has run nightly since March"
+      }
+    },
+    "lowerLevel": false,
+    "reason": "Runs a nightly AI triage of data quality failures and reviews its grouping every morning."
+  },
+  {
+    "key": "SMP007|DE-R16",
+    "criteria": {
+      "SHARED": {
+        "met": true,
+        "quote": "the team's standard for AI-generated SQL and dbt code"
+      },
+      "USERS": {
+        "met": true,
+        "quote": "all 7 engineers follow it in code review"
+      },
+      "WHERE": {
+        "met": true,
+        "quote": "It is in our data engineering Confluence space"
+      },
+      "IMPACT": {
+        "met": true,
+        "quote": "failed reviews dropped since it started"
+      }
+    },
+    "lowerLevel": false,
+    "reason": "Wrote the team standard for AI-generated SQL that all seven engineers follow in code review."
+  },
+  {
+    "key": "SMP007|DE-R17",
+    "criteria": {
+      "SHARED": {
+        "met": true,
+        "quote": "the ingestion and embedding pipeline for the policy documents RAG assistant"
+      },
+      "USERS": {
+        "met": true,
+        "quote": "The Service Desk team and the HR chatbot both use it"
+      },
+      "WHERE": {
+        "met": true,
+        "quote": "it lives in the data-platform repo"
+      },
+      "IMPACT": {
+        "met": true,
+        "quote": "answers now cite the current policy version"
+      }
+    },
+    "extra": {
+      "STANDARD": {
+        "met": false,
+        "quote": ""
+      }
+    },
+    "lowerLevel": false,
+    "reason": "Built the RAG ingestion pipeline that two other teams' assistants rely on."
+  },
+  {
+    "key": "SMP007|CR-C08",
+    "criteria": {
+      "TASK": {
+        "met": true,
+        "quote": "write data incident reports from the ticket history"
+      },
+      "AGENTIC": {
+        "met": true,
+        "quote": "with Confluence and Jira through the approved connectors"
+      },
+      "CHECKED": {
+        "met": true,
+        "quote": "I correct the timeline before publishing"
+      },
+      "REPEATED": {
+        "met": true,
+        "quote": "every week"
+      }
+    },
+    "lowerLevel": false,
+    "reason": "Writes weekly incident reports with Claude through the approved Jira and Confluence connectors and checks them."
+  },
+  {
+    "key": "SMP008|ARC-R12",
+    "criteria": {
+      "TASK": {
+        "met": true,
+        "quote": "checks it against our 18 architecture principles and flags violations"
+      },
+      "AGENTIC": {
+        "met": true,
+        "quote": "goes through a Claude workflow"
+      },
+      "CHECKED": {
+        "met": true,
+        "quote": "I review each finding before the design board"
+      },
+      "REPEATED": {
+        "met": true,
+        "quote": "it runs on every submission, about 12 a month"
+      }
+    },
+    "lowerLevel": false,
+    "reason": "Runs an automated Claude conformance check on every design submission and reviews each finding."
+  },
+  {
+    "key": "SMP008|ARC-R13",
+    "criteria": {
+      "TASK": {
+        "met": true,
+        "quote": "For the payments platform upgrade"
+      },
+      "AGENTIC": {
+        "met": true,
+        "quote": "a Claude Code agent scan 23 repositories"
+      },
+      "CHECKED": {
+        "met": true,
+        "quote": "I validated the list against our service catalog"
+      },
+      "REPEATED": {
+        "met": true,
+        "quote": "I now do this for every major interface change"
+      }
+    },
+    "lowerLevel": false,
+    "reason": "Uses an agent for cross-repository impact analysis on every major interface change and validates the results."
+  },
+  {
+    "key": "SMP008|ARC-R14",
+    "criteria": {
+      "TASK": {
+        "met": true,
+        "quote": "keep application landscape entries in sync with Confluence decisions"
+      },
+      "AGENTIC": {
+        "met": true,
+        "quote": "connected to Claude through an MCP server I set up"
+      },
+      "CHECKED": {
+        "met": true,
+        "quote": "I review the proposed updates before they are saved"
+      },
+      "REPEATED": {
+        "met": true,
+        "quote": "Each week I use it"
+      }
+    },
+    "extra": {
+      "REUSABLE": {
+        "met": true,
+        "quote": "A saved command runs the sync"
+      }
+    },
+    "lowerLevel": false,
+    "reason": "Keeps the EA tool and Confluence in sync each week through an MCP connection, reviewing each update."
+  },
+  {
+    "key": "SMP008|ARC-R16",
+    "criteria": {
+      "SHARED": {
+        "met": true,
+        "quote": "reference architectures for RAG and agent-based solutions"
+      },
+      "USERS": {
+        "met": true,
+        "quote": "Five project teams, including SKP and Billing"
+      },
+      "WHERE": {
+        "met": true,
+        "quote": "on the EA Confluence space"
+      },
+      "IMPACT": {
+        "met": true,
+        "quote": "design reviews now check against them"
+      }
+    },
+    "lowerLevel": false,
+    "reason": "Published reference architectures for RAG and agents that five project teams use, now checked in design reviews."
+  },
+  {
+    "key": "SMP008|ARC-R17",
+    "criteria": {
+      "SHARED": {
+        "met": true,
+        "quote": "the guardrails standard for AI in solutions"
+      },
+      "USERS": {
+        "met": true,
+        "quote": "9 projects have passed it so far"
+      },
+      "WHERE": {
+        "met": true,
+        "quote": "It is in the architecture handbook"
+      },
+      "IMPACT": {
+        "met": true,
+        "quote": "every new project must follow it at design review"
+      }
+    },
+    "extra": {
+      "STANDARD": {
+        "met": true,
+        "quote": "every new project must follow it at design review"
+      }
+    },
+    "lowerLevel": false,
+    "reason": "Wrote the AI guardrails standard that every new project must pass at design review."
+  },
+  {
+    "key": "SMP008|ARC-R19",
+    "criteria": {
+      "BEFORE_AFTER": {
+        "met": true,
+        "quote": "from a design process where each team drew integrations by hand to an AI-assisted target architecture"
+      },
+      "ADOPTED": {
+        "met": true,
+        "quote": "The architecture team owns it"
+      },
+      "MEASURED": {
+        "met": true,
+        "quote": "Design lead time dropped from 6 weeks to 2 across 14 designs"
+      },
+      "OWNED": {
+        "met": true,
+        "quote": "with human sign-off at the design board"
+      }
+    },
+    "lowerLevel": false,
+    "reason": "Redesigned the design process around AI, owned by the architecture team, cutting design lead time from 6 weeks to 2."
+  },
+  {
+    "key": "SMP008|ARC-R20",
+    "criteria": {
+      "BEFORE_AFTER": {
+        "met": true,
+        "quote": "Before, AI use cases were approved case by case by email … an AI review board I chair"
+      },
+      "ADOPTED": {
+        "met": true,
+        "quote": "It was adopted organisation-wide in April"
+      },
+      "MEASURED": {
+        "met": true,
+        "quote": "approval time fell from 5 weeks to 8 days"
+      },
+      "OWNED": {
+        "met": true,
+        "quote": "an AI review board I chair"
+      }
+    },
+    "extra": {
+      "BEYOND_TEAM": {
+        "met": true,
+        "quote": "adopted organisation-wide in April"
+      }
+    },
+    "lowerLevel": false,
+    "reason": "Shaped organisation-wide AI governance that has reviewed 31 use cases and cut approval time from 5 weeks to 8 days."
+  },
+  {
+    "key": "SMP008|CR-C07",
+    "criteria": {
+      "TASK": {
+        "met": true,
+        "quote": "from an architecture decision record to a draft target-state diagram"
+      },
+      "AGENTIC": {
+        "met": true,
+        "quote": "I chain Claude steps"
+      },
+      "CHECKED": {
+        "met": false,
+        "quote": ""
+      },
+      "REPEATED": {
+        "met": false,
+        "quote": ""
+      }
+    },
+    "lowerLevel": false,
+    "reason": "Chains Claude steps from a decision record to a diagram and plan, but does not say how often or how the output is checked.",
+    "improve": "Add how often you do this and how you check the result, e.g. \"I do this for each new ADR and review the diagram with the solution architect.\""
+  },
+  {
+    "key": "SMP010|ARC-R12",
+    "criteria": {
+      "TASK": {
+        "met": false,
+        "quote": ""
+      },
+      "AGENTIC": {
+        "met": false,
+        "quote": ""
+      },
+      "CHECKED": {
+        "met": false,
+        "quote": ""
+      },
+      "REPEATED": {
+        "met": false,
+        "quote": ""
+      }
+    },
+    "extra": {
+      "REUSABLE": {
+        "met": false,
+        "quote": ""
+      }
+    },
+    "lowerLevel": false,
+    "reason": "A general statement used for every question; it names no task, no agent steps and no check.",
+    "improve": "Describe one real piece of work for this practice: what the AI did, how you checked it and how often, e.g. \"Each month a Claude workflow checks new designs against our principles; I review every finding before the design board.\""
+  },
+  {
+    "key": "SMP010|ARC-R13",
+    "criteria": {
+      "TASK": {
+        "met": false,
+        "quote": ""
+      },
+      "AGENTIC": {
+        "met": false,
+        "quote": ""
+      },
+      "CHECKED": {
+        "met": false,
+        "quote": ""
+      },
+      "REPEATED": {
+        "met": false,
+        "quote": ""
+      }
+    },
+    "extra": {
+      "REUSABLE": {
+        "met": false,
+        "quote": ""
+      }
+    },
+    "lowerLevel": false,
+    "reason": "A general statement used for every question; it names no task, no agent steps and no check.",
+    "improve": "Describe one real piece of work for this practice: what the AI did, how you checked it and how often, e.g. \"Each month a Claude workflow checks new designs against our principles; I review every finding before the design board.\""
+  },
+  {
+    "key": "SMP010|ARC-R14",
+    "criteria": {
+      "TASK": {
+        "met": false,
+        "quote": ""
+      },
+      "AGENTIC": {
+        "met": false,
+        "quote": ""
+      },
+      "CHECKED": {
+        "met": false,
+        "quote": ""
+      },
+      "REPEATED": {
+        "met": false,
+        "quote": ""
+      }
+    },
+    "extra": {
+      "REUSABLE": {
+        "met": false,
+        "quote": ""
+      }
+    },
+    "lowerLevel": false,
+    "reason": "A general statement used for every question; it names no task, no agent steps and no check.",
+    "improve": "Describe one real piece of work for this practice: what the AI did, how you checked it and how often, e.g. \"Each month a Claude workflow checks new designs against our principles; I review every finding before the design board.\""
+  },
+  {
+    "key": "SMP010|ARC-R15",
+    "criteria": {
+      "TASK": {
+        "met": false,
+        "quote": ""
+      },
+      "AGENTIC": {
+        "met": false,
+        "quote": ""
+      },
+      "CHECKED": {
+        "met": false,
+        "quote": ""
+      },
+      "REPEATED": {
+        "met": false,
+        "quote": ""
+      }
+    },
+    "extra": {
+      "REUSABLE": {
+        "met": false,
+        "quote": ""
+      }
+    },
+    "lowerLevel": false,
+    "reason": "A general statement used for every question; it names no task, no agent steps and no check.",
+    "improve": "Describe one real piece of work for this practice: what the AI did, how you checked it and how often, e.g. \"Each month a Claude workflow checks new designs against our principles; I review every finding before the design board.\""
+  },
+  {
+    "key": "SMP010|CR-C07",
+    "criteria": {
+      "TASK": {
+        "met": false,
+        "quote": ""
+      },
+      "AGENTIC": {
+        "met": false,
+        "quote": ""
+      },
+      "CHECKED": {
+        "met": false,
+        "quote": ""
+      },
+      "REPEATED": {
+        "met": false,
+        "quote": ""
+      }
+    },
+    "extra": {
+      "REUSABLE": {
+        "met": false,
+        "quote": ""
+      }
+    },
+    "lowerLevel": false,
+    "reason": "A general statement used for every question; it names no task, no agent steps and no check.",
+    "improve": "Describe one real piece of work for this practice: what the AI did, how you checked it and how often, e.g. \"Each month a Claude workflow checks new designs against our principles; I review every finding before the design board.\""
+  },
+  {
+    "key": "SMP010|CR-C08",
+    "criteria": {
+      "TASK": {
+        "met": false,
+        "quote": ""
+      },
+      "AGENTIC": {
+        "met": false,
+        "quote": ""
+      },
+      "CHECKED": {
+        "met": false,
+        "quote": ""
+      },
+      "REPEATED": {
+        "met": false,
+        "quote": ""
+      }
+    },
+    "extra": {
+      "REUSABLE": {
+        "met": false,
+        "quote": ""
+      }
+    },
+    "lowerLevel": false,
+    "reason": "A general statement used for every question; it names no task, no agent steps and no check.",
+    "improve": "Describe one real piece of work for this practice: what the AI did, how you checked it and how often, e.g. \"Each month a Claude workflow checks new designs against our principles; I review every finding before the design board.\""
+  },
+  {
+    "key": "SMP010|ARC-R16",
+    "criteria": {
+      "SHARED": {
+        "met": false,
+        "quote": ""
+      },
+      "USERS": {
+        "met": false,
+        "quote": ""
+      },
+      "WHERE": {
+        "met": false,
+        "quote": ""
+      },
+      "IMPACT": {
+        "met": false,
+        "quote": ""
+      }
+    },
+    "extra": {
+      "STANDARD": {
+        "met": false,
+        "quote": ""
+      }
+    },
+    "lowerLevel": false,
+    "reason": "A general statement about personal use; nothing shared, no users and no location are named.",
+    "improve": "Name what you shared, who uses it, where it lives and what changed, e.g. \"I published our RAG reference architecture on the EA Confluence space; three project teams now use it.\""
+  },
+  {
+    "key": "SMP010|ARC-R17",
+    "criteria": {
+      "SHARED": {
+        "met": false,
+        "quote": ""
+      },
+      "USERS": {
+        "met": false,
+        "quote": ""
+      },
+      "WHERE": {
+        "met": false,
+        "quote": ""
+      },
+      "IMPACT": {
+        "met": false,
+        "quote": ""
+      }
+    },
+    "extra": {
+      "STANDARD": {
+        "met": false,
+        "quote": ""
+      }
+    },
+    "lowerLevel": false,
+    "reason": "A general statement about personal use; nothing shared, no users and no location are named.",
+    "improve": "Name what you shared, who uses it, where it lives and what changed, e.g. \"I published our RAG reference architecture on the EA Confluence space; three project teams now use it.\""
+  },
+  {
+    "key": "SMP010|ARC-R18",
+    "criteria": {
+      "SHARED": {
+        "met": false,
+        "quote": ""
+      },
+      "USERS": {
+        "met": false,
+        "quote": ""
+      },
+      "WHERE": {
+        "met": false,
+        "quote": ""
+      },
+      "IMPACT": {
+        "met": false,
+        "quote": ""
+      }
+    },
+    "extra": {
+      "STANDARD": {
+        "met": false,
+        "quote": ""
+      }
+    },
+    "lowerLevel": false,
+    "reason": "A general statement about personal use; nothing shared, no users and no location are named.",
+    "improve": "Name what you shared, who uses it, where it lives and what changed, e.g. \"I published our RAG reference architecture on the EA Confluence space; three project teams now use it.\""
+  },
+  {
+    "key": "SMP010|CR-C09",
+    "criteria": {
+      "SHARED": {
+        "met": false,
+        "quote": ""
+      },
+      "USERS": {
+        "met": false,
+        "quote": ""
+      },
+      "WHERE": {
+        "met": false,
+        "quote": ""
+      },
+      "IMPACT": {
+        "met": false,
+        "quote": ""
+      }
+    },
+    "extra": {
+      "STANDARD": {
+        "met": false,
+        "quote": ""
+      }
+    },
+    "lowerLevel": false,
+    "reason": "A general statement about personal use; nothing shared, no users and no location are named.",
+    "improve": "Name what you shared, who uses it, where it lives and what changed, e.g. \"I published our RAG reference architecture on the EA Confluence space; three project teams now use it.\""
+  },
+  {
+    "key": "SMP010|ARC-R19",
+    "criteria": {
+      "BEFORE_AFTER": {
+        "met": false,
+        "quote": ""
+      },
+      "ADOPTED": {
+        "met": false,
+        "quote": ""
+      },
+      "MEASURED": {
+        "met": false,
+        "quote": ""
+      },
+      "OWNED": {
+        "met": false,
+        "quote": ""
+      }
+    },
+    "extra": {
+      "BEYOND_TEAM": {
+        "met": false,
+        "quote": ""
+      }
+    },
+    "lowerLevel": false,
+    "reason": "A general statement; it describes no redesigned process, adoption, result or owner.",
+    "improve": "Describe the process before and after, who runs it, a measured result and who owns it, e.g. \"Design reviews moved to AI-generated options; lead time fell from 6 weeks to 2; the architecture team owns it.\""
+  },
+  {
+    "key": "SMP010|ARC-R20",
+    "criteria": {
+      "BEFORE_AFTER": {
+        "met": false,
+        "quote": ""
+      },
+      "ADOPTED": {
+        "met": false,
+        "quote": ""
+      },
+      "MEASURED": {
+        "met": false,
+        "quote": ""
+      },
+      "OWNED": {
+        "met": false,
+        "quote": ""
+      }
+    },
+    "extra": {
+      "BEYOND_TEAM": {
+        "met": false,
+        "quote": ""
+      }
+    },
+    "lowerLevel": false,
+    "reason": "A general statement; it describes no redesigned process, adoption, result or owner.",
+    "improve": "Describe the process before and after, who runs it, a measured result and who owns it, e.g. \"Design reviews moved to AI-generated options; lead time fell from 6 weeks to 2; the architecture team owns it.\""
+  },
+  {
+    "key": "SMP010|CR-C10",
+    "criteria": {
+      "BEFORE_AFTER": {
+        "met": false,
+        "quote": ""
+      },
+      "ADOPTED": {
+        "met": false,
+        "quote": ""
+      },
+      "MEASURED": {
+        "met": false,
+        "quote": ""
+      },
+      "OWNED": {
+        "met": false,
+        "quote": ""
+      }
+    },
+    "extra": {
+      "BEYOND_TEAM": {
+        "met": false,
+        "quote": ""
+      }
+    },
+    "lowerLevel": false,
+    "reason": "A general statement; it describes no redesigned process, adoption, result or owner.",
+    "improve": "Describe the process before and after, who runs it, a measured result and who owns it, e.g. \"Design reviews moved to AI-generated options; lead time fell from 6 weeks to 2; the architecture team owns it.\""
+  },
+  {
+    "key": "SMP011|DE-R12",
+    "criteria": {
+      "TASK": {
+        "met": true,
+        "quote": "refactor our 12 Airflow DAGs to the new operator library"
+      },
+      "AGENTIC": {
+        "met": true,
+        "quote": "I had a Claude Code agent refactor our 12 Airflow DAGs"
+      },
+      "CHECKED": {
+        "met": true,
+        "quote": "ran each DAG in the test environment before release"
+      },
+      "REPEATED": {
+        "met": true,
+        "quote": "I use it for every library upgrade"
+      }
+    },
+    "lowerLevel": false,
+    "reason": "Uses an agent to refactor Airflow DAGs and tests each one before release, for every library upgrade."
+  },
+  {
+    "key": "SMP011|DE-R13",
+    "criteria": {
+      "TASK": {
+        "met": true,
+        "quote": "profile new source tables"
+      },
+      "AGENTIC": {
+        "met": true,
+        "quote": "connected to our warehouse through an MCP server"
+      },
+      "CHECKED": {
+        "met": true,
+        "quote": "I check its profile numbers against a sample query"
+      },
+      "REPEATED": {
+        "met": true,
+        "quote": "Each week I use it"
+      }
+    },
+    "lowerLevel": false,
+    "reason": "Profiles new source tables weekly with Claude connected to the warehouse through MCP and checks the numbers."
+  },
+  {
+    "key": "SMP011|DE-R14",
+    "criteria": {
+      "TASK": {
+        "met": true,
+        "quote": "checks yesterday's loads every morning and opens a ticket for each anomaly"
+      },
+      "AGENTIC": {
+        "met": true,
+        "quote": "An AI job checks yesterday's loads"
+      },
+      "CHECKED": {
+        "met": true,
+        "quote": "I review each ticket before it goes to the owner"
+      },
+      "REPEATED": {
+        "met": true,
+        "quote": "it has run daily since June"
+      }
+    },
+    "lowerLevel": false,
+    "reason": "Runs a daily AI check on data loads that opens anomaly tickets, each reviewed before it goes to the owner."
+  },
+  {
+    "key": "SMP011|CR-C07",
+    "criteria": {
+      "TASK": {
+        "met": true,
+        "quote": "from a failed job log to a root-cause summary, a fix proposal and a draft incident note"
+      },
+      "AGENTIC": {
+        "met": true,
+        "quote": "I chain Claude steps"
+      },
+      "CHECKED": {
+        "met": true,
+        "quote": "I verify the fix in test before applying it"
+      },
+      "REPEATED": {
+        "met": true,
+        "quote": "do this for every production failure"
+      }
+    },
+    "lowerLevel": false,
+    "reason": "Chains Claude steps from a failed job log to a fix and incident note, verifying the fix in test, for every failure."
+  },
+  {
+    "key": "SMP014|QA-R12",
+    "criteria": {
+      "TASK": {
+        "met": true,
+        "quote": "adds or updates the API tests"
+      },
+      "AGENTIC": {
+        "met": true,
+        "quote": "a Claude Code agent reads the diff"
+      },
+      "CHECKED": {
+        "met": true,
+        "quote": "I review the generated tests in the PR and run them in CI"
+      },
+      "REPEATED": {
+        "met": true,
+        "quote": "For every pull request in the payments service"
+      }
+    },
+    "lowerLevel": false,
+    "reason": "An agent writes API tests from every payments PR, and the tests are reviewed and run in CI before approval."
+  },
+  {
+    "key": "SMP014|QA-R13",
+    "criteria": {
+      "TASK": {
+        "met": true,
+        "quote": "updates broken locators during nightly runs"
+      },
+      "AGENTIC": {
+        "met": true,
+        "quote": "an AI healer that updates broken locators … and commits the changes to a branch"
+      },
+      "CHECKED": {
+        "met": true,
+        "quote": "I review its changes every morning before merging"
+      },
+      "REPEATED": {
+        "met": true,
+        "quote": "during nightly runs"
+      }
+    },
+    "extra": {
+      "REUSABLE": {
+        "met": true,
+        "quote": "set up as a shared fixture in our test framework"
+      }
+    },
+    "lowerLevel": false,
+    "reason": "Runs an AI locator healer in nightly Playwright runs and reviews its changes every morning."
+  },
+  {
+    "key": "SMP014|QA-R15",
+    "criteria": {
+      "TASK": {
+        "met": true,
+        "quote": "create defects from failed tests with steps and logs attached"
+      },
+      "AGENTIC": {
+        "met": true,
+        "quote": "connected to Jira and Xray through MCP"
+      },
+      "CHECKED": {
+        "met": true,
+        "quote": "I review each defect before it is filed"
+      },
+      "REPEATED": {
+        "met": true,
+        "quote": "I do this every sprint"
+      }
+    },
+    "lowerLevel": false,
+    "reason": "Creates defects from failed regression tests through an MCP connection to Jira and Xray and reviews each one."
+  },
+  {
+    "key": "SMP014|CR-C07",
+    "criteria": {
+      "TASK": {
+        "met": true,
+        "quote": "from user stories to test scenarios, then to Xray test cases and test data"
+      },
+      "AGENTIC": {
+        "met": true,
+        "quote": "I chain Claude steps"
+      },
+      "CHECKED": {
+        "met": false,
+        "quote": ""
+      },
+      "REPEATED": {
+        "met": true,
+        "quote": "Every sprint"
+      }
+    },
+    "lowerLevel": false,
+    "reason": "Chains Claude from stories to scenarios, test cases and data every sprint, but does not say how the output is checked.",
+    "improve": "Add how you check the generated cases, e.g. \"I review each Xray test case against the acceptance criteria before it goes into the regression set.\""
+  },
+  {
+    "key": "SMP014|QA-R17",
+    "criteria": {
+      "SHARED": {
+        "met": true,
+        "quote": "a prompt pack for writing test cases, test data and defect reports"
+      },
+      "USERS": {
+        "met": false,
+        "quote": ""
+      },
+      "WHERE": {
+        "met": true,
+        "quote": "stored in the QA Confluence space"
+      },
+      "IMPACT": {
+        "met": true,
+        "quote": "has made our test cases more consistent"
+      }
+    },
+    "lowerLevel": false,
+    "reason": "Created a tester prompt pack stored in the QA Confluence space, but does not say who uses it.",
+    "improve": "Add who uses it, e.g. \"The 6 testers in SKP and Billing use it for their test cases every sprint.\""
+  },
+  {
+    "key": "SMP015|PM-R12",
+    "criteria": {
+      "TASK": {
+        "met": true,
+        "quote": "our weekly service report"
+      },
+      "AGENTIC": {
+        "met": true,
+        "quote": "a Claude workflow pulls open incidents and SLA breaches from ServiceNow"
+      },
+      "CHECKED": {
+        "met": true,
+        "quote": "I check the totals against the ServiceNow dashboard"
+      },
+      "REPEATED": {
+        "met": true,
+        "quote": "Every Monday"
+      }
+    },
+    "lowerLevel": false,
+    "reason": "A Claude workflow builds the weekly service report from ServiceNow and Jira, and the totals are checked before it is sent."
+  },
+  {
+    "key": "SMP015|PM-R14",
+    "criteria": {
+      "TASK": {
+        "met": true,
+        "quote": "drafts the access checklist and welcome email from the HR ticket"
+      },
+      "AGENTIC": {
+        "met": false,
+        "quote": ""
+      },
+      "CHECKED": {
+        "met": true,
+        "quote": "review each draft before sending"
+      },
+      "REPEATED": {
+        "met": true,
+        "quote": "for every new joiner, about 10 a month"
+      }
+    },
+    "extra": {
+      "REUSABLE": {
+        "met": true,
+        "quote": "a saved Claude project with templates for onboarding requests"
+      }
+    },
+    "lowerLevel": false,
+    "reason": "Uses a saved Claude project to draft onboarding checklists and emails for every new joiner, but it only drafts text; no tool or system does the work.",
+    "improve": "Say how the workflow does the work itself, e.g. \"The onboarding workflow reads the HR ticket in ServiceNow and raises the access requests; I review each one before it is sent.\""
+  },
+  {
+    "key": "SMP015|PM-R15",
+    "criteria": {
+      "TASK": {
+        "met": true,
+        "quote": "answers first-line password and VPN questions"
+      },
+      "AGENTIC": {
+        "met": true,
+        "quote": "A Copilot Studio agent … hands anything else to the service desk"
+      },
+      "CHECKED": {
+        "met": true,
+        "quote": "I review a sample of 20 conversations every week"
+      },
+      "REPEATED": {
+        "met": true,
+        "quote": "every week"
+      }
+    },
+    "lowerLevel": false,
+    "reason": "Runs a Copilot Studio agent for first-line support questions and reviews a sample of its conversations every week."
+  },
+  {
+    "key": "SMP015|CR-C08",
+    "criteria": {
+      "TASK": {
+        "met": true,
+        "quote": "prepare the monthly central function risk review"
+      },
+      "AGENTIC": {
+        "met": true,
+        "quote": "through the approved connectors"
+      },
+      "CHECKED": {
+        "met": true,
+        "quote": "I check every item against the risk register"
+      },
+      "REPEATED": {
+        "met": true,
+        "quote": "monthly"
+      }
+    },
+    "lowerLevel": false,
+    "reason": "Prepares the monthly risk review with Claude through approved Jira and Confluence connectors and checks each item."
+  },
+  {
+    "key": "SMP015|PM-R16",
+    "criteria": {
+      "SHARED": {
+        "met": true,
+        "quote": "an AI-ready knowledge base of 120 service desk articles"
+      },
+      "USERS": {
+        "met": true,
+        "quote": "The 9 service desk analysts use it daily"
+      },
+      "WHERE": {
+        "met": true,
+        "quote": "in our Confluence space"
+      },
+      "IMPACT": {
+        "met": true,
+        "quote": "repeat tickets fell from 30% to 18%"
+      }
+    },
+    "lowerLevel": false,
+    "reason": "Built a service desk knowledge base used daily by nine analysts and the Teams agent; repeat tickets fell from 30% to 18%."
+  },
+  {
+    "key": "SMP015|PM-R17",
+    "criteria": {
+      "SHARED": {
+        "met": true,
+        "quote": "the AI-generated weekly status pack"
+      },
+      "USERS": {
+        "met": true,
+        "quote": "the PMO and three delivery teams now use"
+      },
+      "WHERE": {
+        "met": true,
+        "quote": "It lives in the PMO SharePoint"
+      },
+      "IMPACT": {
+        "met": true,
+        "quote": "saves each lead about two hours a week"
+      }
+    },
+    "extra": {
+      "STANDARD": {
+        "met": true,
+        "quote": "now use instead of writing their own"
+      }
+    },
+    "lowerLevel": false,
+    "reason": "Built an AI status pack the PMO and three delivery teams use every week, saving each lead about two hours."
+  },
+  {
+    "key": "SMP015|PM-R19",
+    "criteria": {
+      "BEFORE_AFTER": {
+        "met": true,
+        "quote": "instead of manual tickets to five teams, an agent now creates all access requests"
+      },
+      "ADOPTED": {
+        "met": true,
+        "quote": "The central function team runs it"
+      },
+      "MEASURED": {
+        "met": false,
+        "quote": ""
+      },
+      "OWNED": {
+        "met": true,
+        "quote": "with my approval for admin rights"
+      }
+    },
+    "lowerLevel": false,
+    "reason": "Redesigned new-joiner onboarding around an agent run by the central function team, but gives no measured result.",
+    "improve": "Add a measured result, e.g. \"Onboarding now takes 2 days instead of 6, and access errors fell by half.\""
+  }
+]
