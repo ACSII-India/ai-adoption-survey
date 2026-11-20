@@ -6,7 +6,7 @@ Every assessment cycle produces the same set of reports, in the same format, so 
 | --- | --- | --- | --- | --- |
 | 1 | Individual report | Each participant (email) | `report.js` | `out/individual/<Employee ID> - <Name>.html` |
 | 2 | Assessment workbook | Surveyor, dashboard team | `report.js` | `out/AI Assessment Report.xlsx` |
-| 3 | Result email + PDF, as Outlook drafts | Each participant (after review) | `report.js` + `create-outlook-drafts.ps1` | `out/pdf/`, `out/emails/`, `out/Send list.csv` |
+| 3 | Result email with PDF, as an .eml ready to send | Each participant (after review) | `report.js` | `out/eml/`, `out/pdf/`, `out/emails/` |
 | 4 | Leadership summary | CTO and senior leadership | Claude | `out/summaries/Leadership summary.md` |
 | 5 | BU summary | Each director | Claude | `out/summaries/BU - <BU>.md` |
 | 6 | Team summary | Each manager and tech lead | Claude | `out/summaries/Team - <Manager or Tech lead>.md` |
@@ -84,7 +84,7 @@ If you think something is missing or wrong, reply to this email with more detail
 <signatureLines>
 ```
 
-`Send list.csv` (Email, Name, Subject, Body file, Attachment, From mailbox, Cc) feeds `create-outlook-drafts.ps1`, which saves one Outlook **draft** per person and never sends. `Mail merge.xlsx` holds the same rows for review. Sending happens only on a separate, explicit instruction from the user.
+Each email is also written as `out/eml/<Employee ID> - <Name>.eml`: the full message with the PDF attached, marked unsent, so Outlook opens it as a new email with a Send button. `Send list.csv` and `Mail merge.xlsx` list the same emails for review. Sending happens only on a separate, explicit instruction from the user.
 
 ## 4. Leadership summary (Claude writes, about one page)
 

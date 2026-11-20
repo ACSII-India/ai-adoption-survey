@@ -88,21 +88,15 @@ node assessment/report.js --in "<results file>" --org "<org file>"
 
 This writes reports 1–3 of the templates (individual reports and PDFs, workbook, email drafts input) to `assessment/out/`, compares with the latest earlier cycle in `assessment/history/` automatically, and saves this cycle there for future trends. Options: `--previous "<cycle name or snapshot file>"` to compare with a specific cycle; `--no-trend`; `--no-save` for test runs that must not enter the history.
 
-## 5. Prepare the result emails (drafts only)
+## 5. Prepare the result emails (.eml files, nothing sent)
 
 Before step 4's report run, check `assessment/email.json`: `senderName` and `signatureLines` must be filled in (ask the user), `fromMailbox` is optional, and `cc` stays empty unless the user asks (results are personal). `report.js` then also writes, in `assessment/out/`:
 - `pdf/<Employee ID> - <Name>.pdf`: the one-page report for each person (needs Chrome, Chromium or Edge; set `CHROME_PATH` if it is not found). Check that every PDF is one page.
 - `emails/<Employee ID> - <Name>.html` and `.txt`: the email body (template in `references/report-templates.md` section 3).
-- `Send list.csv` and `create-outlook-drafts.ps1`: for the surveyor's Windows PC with Outlook.
+- `eml/<Employee ID> - <Name>.eml`: the complete email (recipient, subject, body, PDF attached), marked unsent. Opened on Windows, Outlook shows it as a new message with a Send button; nothing is sent until someone presses Send.
+- `Send list.csv` and `Mail merge.xlsx`: the same emails as a list, for review and for the automatic job.
 
-To create the drafts, the surveyor copies the whole `assessment/out/` folder to the Windows PC and runs, from that folder:
-
-```powershell
-powershell -ExecutionPolicy Bypass -File .\create-outlook-drafts.ps1 -Only <one test address>
-powershell -ExecutionPolicy Bypass -File .\create-outlook-drafts.ps1
-```
-
-The script **only saves drafts** in Outlook and has no send option. **Never send, and never tell the user to send, unless the user gives a separate, explicit instruction to send.** When asked to send later, confirm the cycle, the number of emails and the mailbox first.
+The surveyor copies the `eml/` folder to the Windows PC and opens each file in Outlook to check and send it. **Never send, and never tell the user to send, unless the user gives a separate, explicit instruction to send.** When asked to send later, confirm the cycle, the number of emails and the mailbox first.
 
 ## 6. Write the summaries
 

@@ -21,6 +21,7 @@ const ExcelJS = require("exceljs");
 const { bank, rules, LEVELS, CRITERIA_LABELS, loadResults, score, decide, toCount, statusText, median } = require("./lib.js");
 const { spawnSync } = require("child_process");
 const { renderIndividual, renderEmail } = require("./individual.js");
+const { buildEml } = require("./eml.js");
 
 // Chrome or Chromium prints the one-page PDFs. CHROME_PATH overrides the search.
 function findChrome() {
@@ -367,7 +368,7 @@ async function main() {
   if (!emailCfg.senderName) console.log("Note: assessment/email.json has no senderName yet; the email signature shows only the team line.");
   const chrome = o["no-pdf"] ? null : findChrome();
   if (!o["no-pdf"] && !chrome) console.log("Note: no Chrome or Chromium found (set CHROME_PATH), so PDFs were not made.");
-  for (const d of ["individual", "pdf", "emails"]) { fs.rmSync(path.join(out, d), { recursive: true, force: true }); fs.mkdirSync(path.join(out, d), { recursive: true }); }
+  for (const d of ["individual", "pdf", "emails", "eml"]) { fs.rmSync(path.join(out, d), { recursive: true, force: true }); fs.mkdirSync(path.join(out, d), { recursive: true }); }
   const mm = [];
   for (const { p, r } of results) {
     const base = `${safeFile(p.empId)} - ${safeFile(p.name)}`;
@@ -384,6 +385,8 @@ async function main() {
     const mail = renderEmail(p, r, { cycle, trend, email: emailCfg });
     fs.writeFileSync(path.join(out, "emails", base + ".html"), mail.html);
     fs.writeFileSync(path.join(out, "emails", base + ".txt"), mail.text);
+    // Ready-to-send email: opens in Outlook as a new unsent message with the PDF attached.
+    if (p.email) fs.writeFileSync(path.join(out, "eml", base + ".eml"), await buildEml({ to: p.email, cc: emailCfg.cc, subject: mail.subject, html: mail.html, text: mail.text, attachment: pdf ? path.join(out, pdf) : null }));
     const nl = r.nextLevel;
     mm.push({
       Email: p.email, Name: p.name, Subject: mail.subject, Level: `Level ${r.conf.level} – ${levelName(r.conf.level)}`, Score: r.conf.score,
@@ -399,7 +402,6 @@ async function main() {
   const csv = v => `"${String(v ?? "").replace(/"/g, '""')}"`;
   fs.writeFileSync(path.join(out, "Send list.csv"), "﻿" + [["Email", "Name", "Subject", "Body file", "Attachment", "From mailbox", "Cc"].map(csv).join(","),
     ...mm.map(m => [m.Email, m.Name, m.Subject, m["Body file"], m.Attachment, emailCfg.fromMailbox || "", emailCfg.cc || ""].map(csv).join(","))].join("\r\n") + "\r\n");
-  fs.copyFileSync(path.join(__dirname, "send", "create-outlook-drafts.ps1"), path.join(out, "create-outlook-drafts.ps1"));
 
   console.log(`People assessed: ${results.length} (left out ${skipped.length})`);
   console.log(`Levels: ${[0, ...LEVELS].map((L, i) => `L${L} ${orgStats.spread[i]}`).join(" · ")}`);
@@ -408,7 +410,7 @@ async function main() {
   console.log(`Wrote: ${path.join(out, "AI Assessment Report.xlsx")}`);
   console.log(`Wrote: ${results.length} reports in ${path.join(out, "individual")}`);
   console.log(`Wrote: ${path.join(out, "Mail merge.xlsx")}`);
-  console.log(`Wrote: ${mm.filter(m => m.Attachment).length} PDFs in ${path.join(out, "pdf")}, ${mm.length} email bodies in ${path.join(out, "emails")}, and Send list.csv`);
+  console.log(`Wrote: ${mm.filter(m => m.Attachment).length} PDFs in ${path.join(out, "pdf")}, ${mm.length} emails in ${path.join(out, "eml")} (open in Outlook to send), and Send list.csv`);
   if (prev) console.log(`Trend vs ${prev.cycle}: up ${trends.filter(t => t.status === "Up").length}, same ${trends.filter(t => t.status === "Same").length}, down ${trends.filter(t => t.status === "Down").length}, new ${trends.filter(t => t.status === "New").length}, not in this cycle ${trends.filter(t => t.status === "Not in this cycle").length}${rulesNote ? ". " + rulesNote : ""}`);
   else console.log("Trend: no earlier cycle in history yet; this run becomes the baseline.");
   if (!o["no-save"]) console.log(`Saved this cycle for future trends: ${history.save(histDir, history.snapshot(cycle, results))}`);
