@@ -13,7 +13,7 @@ The sample covers all 24 team roles and all 6 role questionnaires. `TEST - QA En
 | SMP003 | QA Engineer 1 | QA | 2 Exploring | 2.3 | 2 | 0 / 0 / 1 |  | Level 5 claim with a chat-only example: lower-level use, Does not meet |
 | SMP004 | Delivery Lead 1 | Delivery Lead | 3 Practicing | 3.3 | 3 | 0 / 0 / 0 |  | Weekly on core tasks; 2 of 6 complex |
 | SMP005 | Tech Lead 1 | Tech Lead | 4 Proficient | 4.2 | 4 | 1 / 0 / 1 |  | One proven Level 5 practice; second example misses "checked" and "regularly" |
-| SMP006 | Developer 1 | Developer | 5 Advanced | 5.3 | 5 | 4 / 1 / 0 |  | 3 proven Level 5; 1 of 4 Level 6; one example missing "checked" |
+| SMP006 | Developer 1 | Developer | 5 Advanced | 5.3 | 5 | 4 / 0 / 1 |  | 3 proven Level 5; 1 of 4 Level 6; one example missing "checked" |
 | SMP007 | Data Engineer 1 | Data Engineer | 6 Multiplier | 6 | 6 | 6 / 0 / 0 |  | 4 proven Level 5, 2 proven Level 6; E answer without a team standard |
 | SMP008 | Enterprise Architect 1 | Enterprise Architect | 7 Transformer | 7 | 7 | 7 / 0 / 2 |  | Level 7 proven twice; two lower examples miss points; one 10-word example rejected by the quality filter |
 | SMP009 | Product Engineer 1 | Product Engineer | 4 Proficient | 4 | 4 | 0 / 0 / 2 |  | Placeholder text rejected by the quality filter |
@@ -34,7 +34,7 @@ The sample covers all 24 team roles and all 6 role questionnaires. `TEST - QA En
 | SMP026 | Technology Services Manager 1 | Manager - Technology Services | 3 Practicing | 3 | 3 | 0 / 0 / 0 |  | Level 3 profile |
 | SMP027 | Workplace Technology Manager 1 | Manager - Workplace Technology | 1 Aware | 1.3 | 1 | 0 / 0 / 0 |  | Level 1 profile |
 
-Level spread: Level 0: 1 · Level 1: 2 · Level 2: 4 · Level 3: 6 · Level 4: 7 · Level 5: 2 · Level 6: 2 · Level 7: 1. Examples: Meets 30, Needs more evidence 5, Does not meet 19 (3 of them by the quality filter).
+Level spread: Level 0: 1 · Level 1: 2 · Level 2: 4 · Level 3: 6 · Level 4: 7 · Level 5: 2 · Level 6: 2 · Level 7: 1. Examples: Meets 30, Needs more evidence 4, Does not meet 20 (3 of them by the quality filter).
 
 ## Sample cycle 2 (trend)
 

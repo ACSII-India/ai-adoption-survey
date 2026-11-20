@@ -132,8 +132,8 @@
         "quote": ""
       },
       "REPEATED": {
-        "met": true,
-        "quote": "Quite often"
+        "met": false,
+        "quote": ""
       }
     },
     "extra": {
@@ -143,8 +143,8 @@
       }
     },
     "lowerLevel": false,
-    "reason": "Built custom review and test commands and uses them often, but does not say how their output is checked.",
-    "improve": "Add how you check what the commands produce, e.g. \"I run /review-pr on every PR and compare it with the human review.\""
+    "reason": "Built custom review and test commands, but does not say how often they are used or how their output is checked.",
+    "improve": "Add how often you use the commands and how you check what they produce, e.g. \"I run /review-pr on every PR and compare it with the human review.\""
   },
   {
     "key": "SMP006|DEV-R15",
