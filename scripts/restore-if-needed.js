@@ -15,7 +15,7 @@ const ExcelJS = require("exceljs");
 
 const [fresh, prev] = process.argv.slice(2);
 const ROOT = path.join(__dirname, "..");
-const url = (process.env.RENDER_URL || "https://ai-adoption-survey.onrender.com").replace(/\/$/, "");
+const url = (process.env.RENDER_URL || "https://tech-adoption.onrender.com").replace(/\/$/, "");
 
 async function ids(file) {
   const wb = new ExcelJS.Workbook();

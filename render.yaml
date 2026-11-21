@@ -2,7 +2,7 @@
 # Keep to ONE instance: sessions, email codes and the Excel write queue live in memory.
 services:
   - type: web
-    name: ai-adoption-survey
+    name: tech-adoption
     runtime: node
     region: singapore
     plan: free               # sleeps after ~15 min idle; restart drops in-memory sessions and email codes. Use starter for go-live.
@@ -15,7 +15,7 @@ services:
         value: "22"
       - key: NODE_ENV
         value: production
-      - key: BASE_URL                 # e.g. https://ai-adoption-survey.onrender.com (must match Entra redirect URI)
+      - key: BASE_URL                 # e.g. https://tech-adoption.onrender.com (must match Entra redirect URI)
         sync: false
       - key: SESSION_SECRET
         generateValue: true

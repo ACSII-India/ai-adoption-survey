@@ -288,6 +288,7 @@ class LocalFileStore {
         for (const h of fh) if (!th.includes(h)) { th.push(h); to.getRow(1).getCell(th.length).value = h; }
         const have = new Set(this.rows(to, th).map(r => k.map(x => r[x]).join("|")));
         for (const r of this.rows(from, fh)) {
+          if (k.some(x => !r[x])) continue;   // rows without a key (an older tab layout) are dropped
           const id = k.map(x => r[x]).join("|");
           if (!have.has(id)) { this.appendRow(to, th, r); have.add(id); added++; }
         }

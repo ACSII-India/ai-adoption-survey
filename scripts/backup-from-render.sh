@@ -2,7 +2,7 @@
 # Downloads the results workbook from the Render trial (DEV_MOCK) and keeps a
 # copy in the local backup folder. Run on a timer (see scripts/systemd/).
 #
-#   RENDER_URL   service address (default https://ai-adoption-survey.onrender.com)
+#   RENDER_URL   service address (default https://tech-adoption.onrender.com)
 #   BACKUP_DIR   where copies go  (default <project>/backup)
 #
 # A new timestamped file is written only when the workbook changed.
@@ -14,7 +14,7 @@
 # real Entra setup the results are already in OneDrive/SharePoint.
 set -euo pipefail
 
-RENDER_URL="${RENDER_URL:-https://ai-adoption-survey.onrender.com}"
+RENDER_URL="${RENDER_URL:-https://tech-adoption.onrender.com}"
 RENDER_URL="${RENDER_URL%/}"
 PROJECT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 BACKUP_DIR="${BACKUP_DIR:-$PROJECT_DIR/backup}"

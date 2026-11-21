@@ -261,7 +261,10 @@ async function main() {
     const row = { "Employee ID": p.empId, Name: p.name, Role: p.role, "Question ID": x.id, Level: x.level, Practice: x.useCase, Answer: x.answer,
       Decision: x.decision ? x.decision.decision : "Not assessed", "Lower-level use": j.qualityRejected ? "" : j.lowerLevel ? "Yes" : "",
       Reason: j.reason || "", "To improve": j.improve || "", Example: x.evidence ? x.evidence.example : "",
-      "Follow-up answer": x.evidence ? x.evidence.followupA : "" };
+      "Follow-up answer": x.evidence ? x.evidence.followupA : "",
+      // Only in the results workbook's "Assessment evidence" tab (same layout as the automatic job),
+      // so the survey's result link can rebuild the report from it.
+      "Submission ID": p.submissionId, Judgement: JSON.stringify(x.judgement || null) };
     crit.forEach((c, i) => { const k = (j.criteria || {})[c] || {}; row[`Check ${i + 1}`] = `${k.met ? "✓" : "✗"} ${CRITERIA_LABELS[c]}${k.met && k.quote ? `: “${k.quote}”` : ""}`; });
     const ex = rules.evidenceExtraForE[x.level]; const ek = (j.extra || {})[ex];
     row["Extra for E"] = x.answer === "E" ? `${ek && ek.met ? "✓" : "✗"} ${CRITERIA_LABELS[ex]}${ek && ek.met && ek.quote ? `: “${ek.quote}”` : ""}` : "";
@@ -421,7 +424,10 @@ async function main() {
     if (ws.rowCount > 1) ws.autoFilter = { from: { row: 1, column: 1 }, to: { row: 1, column: ws.columnCount } };
   };
   copySheet(wb.getWorksheet("Individuals"), "Assessment");
-  copySheet(wb.getWorksheet("Evidence"), "Assessment evidence");
+  { const old = rwb.getWorksheet("Assessment evidence"); if (old) rwb.removeWorksheet(old.id);
+    const ev = wb.getWorksheet("Evidence"), cols = ev.columns.map(c => c.key);
+    sheet(rwb, "Assessment evidence", ["Submission ID", ...cols, "Judgement"], evRows,
+      { widths: Object.fromEntries(ev.columns.map(c => [c.key, c.width])), wrap: ["Reason", "To improve", "Example"] }); }
   await rwb.xlsx.writeFile(withFile);
   // Send list for the Outlook draft script (paths are relative to the out folder).
   const csv = v => `"${String(v ?? "").replace(/"/g, '""')}"`;
