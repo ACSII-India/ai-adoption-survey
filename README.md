@@ -51,9 +51,9 @@ A second check-in from the same Employee ID in the same cycle is blocked. The at
 
 - **Approve a new check-in**: status `Reopened`, `New check-in approved` = Yes. The person clicks Submit again and the new check-in counts.
 - **Mark as test entry**: status `Test`, for trial runs before the real survey. The person can then send their real check-in.
-- **Mark as deleted**: status `Deleted`.
+- **Mark as inactive**: status `Inactive` (rows marked `Deleted` before mean the same).
 
-Every change is recorded in the results Excel itself (Responses sheet: `Status`, `New check-in requested (UTC)`, `New check-in approved`, `Status changed by`, `Status changed on (UTC)`). Only `Submitted` check-ins are assessed; the scripts and the skill skip `Reopened`, `Test`, `Deleted` and `Superseded` rows (`excludeStatuses` in `assessment/rules.json`).
+Every change is recorded in the results Excel itself (Responses sheet: `Status`, `New check-in requested (UTC)`, `New check-in approved`, `Status changed by`, `Status changed on (UTC)`). Only `Submitted` check-ins are assessed; the scripts and the skill skip `Reopened`, `Test`, `Inactive` (or `Deleted`) and `Superseded` rows (`excludeStatuses` in `assessment/rules.json`).
 
 ### 2. The result page
 

@@ -204,7 +204,7 @@ async function main() {
   sum.columns = [{ width: 40 }, { width: 18 }, { width: 12 }];
   const t = sum.addRow(["AI adoption assessment"]); t.font = { bold: true, size: 16, color: { argb: "FF1F3864" } };
   [["Cycle", cycle], ["Generated", new Date().toLocaleString()], ["Source file", path.resolve(o.in)], ["Org file", o.org ? path.resolve(o.org) : "Not provided"],
-   ["People assessed", results.length], ["Left out (deleted, superseded, test)", skipped.length], ["Org headcount", org ? org.size : "—"],
+   ["People assessed", results.length], ["Left out (inactive, superseded, test)", skipped.length], ["Org headcount", org ? org.size : "—"],
    ["Coverage", org ? orgStats.coverage : "—"], ["Organisation level (median)", orgStats.groupLevel], ["Organisation score (average)", orgStats.groupScore],
    ["Adoption (Level 3+)", orgStats.adoption], ["Advanced (Level 5+)", orgStats.advanced], ["Multipliers (Level 6+)", orgStats.multipliers],
    ["Cross-role score (10 common questions)", orgStats.cross], ["Examples: Meets", dec("Meets")], ["Examples: Needs more evidence", dec("Needs more evidence")],

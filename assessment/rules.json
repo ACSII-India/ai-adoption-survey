@@ -39,5 +39,5 @@
   },
 
   "excludeNamePrefixes": ["TEST - "],
-  "excludeStatuses": ["Deleted", "Superseded", "Test", "Reopened"]
+  "excludeStatuses": ["Inactive", "Deleted", "Superseded", "Test", "Reopened"]
 }

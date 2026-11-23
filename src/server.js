@@ -239,8 +239,8 @@ app.get("/api/result", limiter(10, 120), async (req, res) => {
 async function reportFromWorkbook(id) {
   const row = await store.getSubmission(id);
   if (!row) return null;
-  // Deleted, test entries and check-ins replaced by an approved new one no longer have a report.
-  if (["Deleted", "Test", "Reopened", "Superseded"].includes(row.Status)) return { status: "withdrawn" };
+  // Inactive (formerly "Deleted"), test entries and check-ins replaced by an approved new one no longer have a report.
+  if (["Inactive", "Deleted", "Test", "Reopened", "Superseded"].includes(row.Status)) return { status: "withdrawn" };
   const t = v => String(v ?? "").replace(/^'/, "");
   const qset = Object.keys(bank.questionnaires).find(k => bank.questionnaires[k].name === t(row.Role))
     || (bank.roleMap.find(m => m.teamRole === t(row["Team role"])) || {}).questionnaire;
@@ -366,10 +366,10 @@ app.post("/admin/api/review", auth.requireReviewer, sameOrigin, async (req, res)
 });
 
 app.post("/admin/api/status", auth.requireReviewer, auth.requireAdmin, sameOrigin, async (req, res) => {
-  // Submitted: counts. Deleted: removed. Test: a trial entry. Reopened: the surveyor approved a
+  // Submitted: counts. Inactive: no longer counts (rows marked "Deleted" earlier mean the same). Test: a trial entry. Reopened: the surveyor approved a
   // new check-in for this person. Only "Submitted" blocks a new check-in, and only it is assessed.
   const status = str(req.body.status, 20), id = str(req.body.submissionId, 20);
-  if (!["Submitted", "Deleted", "Test", "Reopened"].includes(status)) return fail(res, 400, "bad_status", "Unknown status.");
+  if (!["Submitted", "Inactive", "Test", "Reopened"].includes(status)) return fail(res, 400, "bad_status", "Unknown status.");
   try {
     if (status === "Submitted") {
       const all = await store.listResponses(), r = all.find(x => x["Submission ID"] === id);

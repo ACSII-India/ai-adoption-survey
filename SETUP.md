@@ -18,7 +18,7 @@ flowchart LR
 | --- | --- | --- |
 | Participant | Opens the link; no account needed. Enters name, employee ID, work email, and department. Optionally confirms the email with a 6-digit code. | Takes the check-in, sees the final score, emails the results to themselves |
 | Reviewer | Signs in with Microsoft; needs the **Survey.Reviewer** app role | Sees all responses, the spreadsheet view, and the review queue; records decisions on evidence; downloads the Excel file |
-| Admin | Signs in with Microsoft; needs the **Survey.Admin** app role | Everything a reviewer can do, plus marking responses as deleted or restoring them |
+| Admin | Signs in with Microsoft; needs the **Survey.Admin** app role | Everything a reviewer can do, plus marking responses as inactive, test entries or approving a new check-in |
 
 **Where data lives.** The Excel workbook is the only store. It has a **Responses** sheet (one row per submission, with the same first 35 columns as the baseline workbook's Response Log) and an **Evidence** sheet (one row per example, including reviewer decisions). Participants' unfinished answers stay in their own browser until they submit.
 
@@ -195,7 +195,7 @@ Then:
 - [ ] Use **Email my results** and check the email arrives from the survey mailbox.
 - [ ] Try an email from another domain and check it is refused.
 - [ ] Sign in at `/admin` as a reviewer, record a decision, and check the Evidence row and the Responses counts update.
-- [ ] Check that a reviewer has no **Mark as deleted** button and that an admin does.
+- [ ] Check that a reviewer has no **Mark as inactive** button and that an admin does.
 - [ ] Sign in with an account that has no role and check you see **No access**.
 - [ ] Click **Download Excel file** and **Open in Excel online**.
 

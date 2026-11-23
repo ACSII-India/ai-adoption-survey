@@ -31,7 +31,7 @@ Run commands from the project root with Node 22. If `node -v` is older, prefix c
 
 - **Results file** (required): the Excel file from the survey admin page (**Download Excel file**), or a backup copy. Ask for the path if not given.
 - **Org file** (recommended): Excel or CSV with `Employee ID` and `Department`, `Project team` (several separated by `;`), `BU`, `Director`, `Manager`, `Tech lead`, one row per employee, including people who did not respond (that gives coverage). Without it, only role and organisation groups appear.
-- **Statuses:** only `Submitted` rows of the Responses sheet are assessed. Rows the surveyor marked `Reopened` (a new check-in approved; see `New check-in approved`, `Status changed by`, `Status changed on (UTC)`), `Test`, `Deleted` or `Superseded` are left out automatically and listed on the **Left out** sheet.
+- **Statuses:** only `Submitted` rows of the Responses sheet are assessed. Rows the surveyor marked `Reopened` (a new check-in approved; see `New check-in approved`, `Status changed by`, `Status changed on (UTC)`), `Test`, `Inactive` (older files: `Deleted`) or `Superseded` are left out automatically and listed on the **Left out** sheet.
 - **Cycle name** comes from the results file (`Cycle` column, set by `CYCLE_NAME` on the survey).
 
 ## 2. Prepare

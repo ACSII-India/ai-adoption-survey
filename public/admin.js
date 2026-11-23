@@ -34,7 +34,7 @@
     let h = `<div class="panel"><h2>Responses, ${esc(me.cycle)}</h2><p class="hint" style="margin-top:0">Signed in as ${esc(me.name)} (${me.role}). ${submitted.length} submitted, ${pending} examples waiting for review.</p>
       <div class="row" style="margin-top:0">${me.mock ? "" : '<a class="btn" href="/admin/api/download">Download Excel file</a><button class="btn ghost" id="open" type="button">Open in Excel online</button>'}<button class="btn ghost" id="reload" type="button">Refresh</button></div>
       <div class="row"><button class="chip" type="button" data-tab="people" aria-pressed="${tab === "people"}">People</button><button class="chip" type="button" data-tab="sheet" aria-pressed="${tab === "sheet"}">Spreadsheet view</button><button class="chip" type="button" data-tab="queue" aria-pressed="${tab === "queue"}">Review queue (${pending})</button>
-      <label style="display:inline-flex;gap:6px;align-items:center;margin-left:8px"><input type="checkbox" id="all" style="width:auto" ${showAll ? "checked" : ""}> Include superseded and deleted</label></div>`;
+      <label style="display:inline-flex;gap:6px;align-items:center;margin-left:8px"><input type="checkbox" id="all" style="width:auto" ${showAll ? "checked" : ""}> Include inactive, test and superseded</label></div>`;
     const asks = data.responses.filter(r => r.Status === "Submitted" && r["New check-in requested (UTC)"]);
     if (asks.length && me.role === "admin") h += `<div class="panel" style="margin:12px 0 0;border-left:4px solid #b45309"><h3 style="margin-top:0">New check-in requests waiting for approval (${asks.length})</h3>
       <p class="hint" style="margin-top:0">These people tried to submit again. Open each one and choose Approve a new check-in, or Mark as test entry if the earlier one was a trial.</p>
@@ -94,9 +94,10 @@
         Submitted: r["New check-in requested (UTC)"] ? `<strong>This person asked to send a new check-in (${esc(r["New check-in requested (UTC)"])} UTC).</strong> Approve it, or mark this one as a test entry if it was a trial.` : "Counts in the assessment. While it does, this person cannot send another check-in in this cycle.",
         Reopened: "You approved a new check-in. This one no longer counts; the person can submit again.",
         Test: "Marked as a test entry. It does not count, and the person can send their real check-in.",
-        Deleted: "Deleted. It does not count, and the person can submit again."
+        Inactive: "Inactive. It does not count, and the person can submit again.",
+        Deleted: "Inactive. It does not count, and the person can submit again."
       }[r.Status] || ""}${r["Status changed by"] ? ` <br>Changed to ${esc(r.Status)} by ${esc(r["Status changed by"])} on ${esc(r["Status changed on (UTC)"])} UTC.` : ""}</p><div class="row">`;
-      if (r.Status === "Submitted") h += '<button class="btn" id="reopen" type="button">Approve a new check-in</button><button class="btn ghost" id="test" type="button">Mark as test entry</button><button class="btn ghost" id="del" type="button">Mark as deleted</button>';
+      if (r.Status === "Submitted") h += '<button class="btn" id="reopen" type="button">Approve a new check-in</button><button class="btn ghost" id="test" type="button">Mark as test entry</button><button class="btn ghost" id="del" type="button">Mark as inactive</button>';
       else h += '<button class="btn ghost" id="restore" type="button">Count this check-in again</button>';
       h += '<span class="hint">Admin only. The row always stays in the Excel file.</span></div>';
     }
@@ -118,7 +119,7 @@
       } catch (e) { lb.innerHTML = `<p class="err">${esc(e.message)}</p>`; }
     })();
     const setStatus = async status => { try { await post("/admin/api/status", { submissionId: sel, status }); await load(); } catch (e) { alert(e.message); } };
-    if ($("del")) $("del").onclick = () => { if (confirm(`Mark the response from ${r.Name} as deleted?`)) setStatus("Deleted"); };
+    if ($("del")) $("del").onclick = () => { if (confirm(`Mark the check-in from ${r.Name} as inactive? It stays in the Excel file, stops counting, and they can submit again.`)) setStatus("Inactive"); };
     if ($("reopen")) $("reopen").onclick = () => { if (confirm(`Approve a new check-in for ${r.Name}? This check-in will stop counting and they can submit again.`)) setStatus("Reopened"); };
     if ($("test")) $("test").onclick = () => { if (confirm(`Mark the check-in from ${r.Name} as a test entry? It will stop counting and they can send their real check-in.`)) setStatus("Test"); };
     if ($("restore")) $("restore").onclick = () => setStatus("Submitted");
