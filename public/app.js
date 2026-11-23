@@ -265,10 +265,17 @@
     pollTimer = setInterval(() => checkResult(el, id, r, false), 120000);
   }
 
+  function showWithdrawn(el) {
+    clearInterval(pollTimer);
+    el.innerHTML = `<div class="panel"><h2>This check-in was withdrawn</h2>
+      <p style="margin:0">The survey owner withdrew this check-in (for example a test entry, or replaced by a newer check-in), so it has no report. If you sent a new check-in, open the link you saved with that one. <a href="/">Start a new check-in</a>.</p></div>`;
+  }
+
   async function checkResult(el, id, r, manual) {
     try {
       const j = await fetchResult(id, r);
       if (j.status === "ready" && j.html) showReport(el, j.html, { ready: true, id, r, summary: j.summary });
+      else if (j.status === "withdrawn") showWithdrawn(el);
       else if (manual && $("pmsg")) $("pmsg").textContent = "Not ready yet. Please check again later.";
     } catch (e) { if (manual && $("pmsg")) $("pmsg").textContent = e.message; }
   }
@@ -312,7 +319,9 @@
       el.innerHTML = '<div class="panel"><p class="thinking" style="margin:0">Loading your result…</p></div>';
       try {
         const j = await fetchResult(id, r);
-        if (j.status === "ready" && j.html) showReport(el, j.html, { ready: true, id, r, summary: j.summary }); else showPending(el, { id, r });
+        if (j.status === "ready" && j.html) showReport(el, j.html, { ready: true, id, r, summary: j.summary });
+        else if (j.status === "withdrawn") showWithdrawn(el);
+        else showPending(el, { id, r });
       } catch (e) { el.innerHTML = `<div class="panel"><p class="err" style="margin:0">${esc(e.message)}</p></div>`; }
       return;
     }

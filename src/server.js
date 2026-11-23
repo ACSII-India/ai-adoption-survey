@@ -225,6 +225,7 @@ app.get("/api/result", limiter(10, 120), async (req, res) => {
   // "Assessment evidence" tab); the stored copy is only a fallback.
   try {
     const b = await reportFromWorkbook(id);
+    if (b && b.status === "withdrawn") return res.json(b);
     if (b && b.status === "ready") { results.setReady(id, b.html, "workbook"); return res.json(b); }
     if (b && b.status === "pending") { const e = results.get(id); return res.json(e && e.status === "ready" && e.source === "assessment" ? { status: "ready", html: e.html } : { status: "pending" }); }
   } catch (err) { console.error("report from workbook failed:", err.message); }
@@ -237,7 +238,9 @@ app.get("/api/result", limiter(10, 120), async (req, res) => {
 // examples not judged yet), or null when the submission is not in the workbook.
 async function reportFromWorkbook(id) {
   const row = await store.getSubmission(id);
-  if (!row || row.Status === "Deleted") return null;
+  if (!row) return null;
+  // Deleted, test entries and check-ins replaced by an approved new one no longer have a report.
+  if (["Deleted", "Test", "Reopened", "Superseded"].includes(row.Status)) return { status: "withdrawn" };
   const t = v => String(v ?? "").replace(/^'/, "");
   const qset = Object.keys(bank.questionnaires).find(k => bank.questionnaires[k].name === t(row.Role))
     || (bank.roleMap.find(m => m.teamRole === t(row["Team role"])) || {}).questionnaire;
