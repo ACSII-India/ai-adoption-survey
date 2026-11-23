@@ -62,6 +62,8 @@ module.exports = {
   cycleName: env.CYCLE_NAME || "Baseline",
   // Named in the "already submitted" message: the person who approves a new check-in.
   surveyOwner: env.SURVEY_OWNER || "the survey owner",
+  // Optional: how to find the survey owner in Teams (for example their work email), shown in brackets.
+  surveyOwnerContact: env.SURVEY_OWNER_CONTACT || "",
   allowResubmit: bool("ALLOW_RESUBMIT", false),
   allowedEmailDomains: (env.ALLOWED_EMAIL_DOMAINS || "").split(",").map(s => s.trim().toLowerCase()).filter(Boolean),
   requireEmailCode: bool("REQUIRE_EMAIL_CODE", false),
