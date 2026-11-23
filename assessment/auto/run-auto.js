@@ -21,6 +21,9 @@ const ROOT = path.join(__dirname, "..", "..");
 const HERE = __dirname;
 const cfg = JSON.parse(fs.readFileSync(path.join(HERE, "config.json"), "utf8"));
 if (process.env.SURVEY_URL) cfg.surveyUrl = process.env.SURVEY_URL; // e.g. a local copy for testing
+// Run for specific people without putting their addresses in config.json (which is in git):
+//   ONLY_EMAILS="a@x.org,b@x.org" assessment/auto/run-auto.sh
+if (process.env.ONLY_EMAILS) cfg.onlyEmails = process.env.ONLY_EMAILS.split(/[,;\s]+/).filter(Boolean);
 const STATE = path.join(HERE, "state.json");
 const LOG = path.join(HERE, "auto.log");
 const dryRun = process.argv.includes("--dry-run");
