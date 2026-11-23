@@ -1,5 +1,5 @@
 "use strict";
-// Automatic per-submission assessment. Run every 15 minutes by a timer
+// Automatic per-submission assessment. Run every 10 minutes by a timer
 // (scripts/systemd/ai-survey-auto.*). For each person who submitted since the
 // last run it:
 //   1. assesses only them with the standard engine (prepare.js, Claude Code

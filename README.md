@@ -32,7 +32,7 @@ flowchart TD
   A[Person takes the survey<br/>role → questionnaire, 30 answers,<br/>examples for Level 5-7 claims] --> B{Any Level 5-7<br/>claims with examples?}
   B -- No --> C[Report shown right away<br/>summary + one-page report + Download PDF]
   B -- Yes --> D[Page shows: examples are being assessed<br/>+ personal result link to save]
-  D --> E[Automatic job, every 15 min<br/>Claude Code judges the examples<br/>scripts check and score]
+  D --> E[Automatic job, every 10 min<br/>Claude Code judges the examples<br/>scripts check and score]
   E --> F[Report uploaded to the survey<br/>Assessment tabs written into the results Excel]
   F --> G[Person reopens the link:<br/>Your report is ready]
   A --> H[(Results Excel<br/>Responses · Evidence ·<br/>Assessment · Assessment evidence)]
@@ -66,7 +66,7 @@ Every change is recorded in the results Excel itself (Responses sheet: `Status`,
 
 `assessment/auto/run-auto.js` runs on a timer on the surveyor's machine:
 
-1. Reads the latest results from the backup folder and picks new or changed submissions.
+1. Downloads the latest results from the survey (the backup script) and picks new or changed submissions.
 2. `prepare.js` applies the quality filter (at least 12 real words) and writes the examples to judge, without names.
 3. Claude Code (headless) judges each example against [RUBRIC.md](assessment/RUBRIC.md) Part B.
 4. `report.js --check` validates every judgement (quotes must appear in the text), then builds the report.

@@ -1,9 +1,9 @@
 [Unit]
-Description=AI adoption survey: automatic assessment every 15 minutes
+Description=AI adoption survey: automatic assessment every 10 minutes
 
 [Timer]
 OnBootSec=5min
-OnUnitActiveSec=15min
+OnUnitActiveSec=10min
 Persistent=true
 
 [Install]

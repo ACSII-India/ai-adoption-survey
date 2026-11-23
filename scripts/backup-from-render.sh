@@ -23,6 +23,9 @@ LOG="$BACKUP_DIR/backup.log"
 
 mkdir -p "$BACKUP_DIR"
 umask 077
+# The backup timer and the automatic job both run this script: one at a time.
+exec 9>"$BACKUP_DIR/.backup.lock"
+flock -w 300 9 || { echo "another backup is still running" >&2; exit 0; }
 log() { printf '%s %s\n' "$(date '+%Y-%m-%d %H:%M:%S')" "$*" | tee -a "$LOG"; }
 
 work="$(mktemp -d)"
