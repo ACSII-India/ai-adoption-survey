@@ -268,7 +268,15 @@
   function showWithdrawn(el) {
     clearInterval(pollTimer);
     el.innerHTML = `<div class="panel"><h2>This check-in was withdrawn</h2>
-      <p style="margin:0">The survey owner withdrew this check-in (for example a test entry, or replaced by a newer check-in), so it has no report. If you sent a new check-in, open the link you saved with that one. <a href="/">Start a new check-in</a>.</p></div>`;
+      <p style="margin:0">The survey owner withdrew this check-in (for example a test entry, or replaced by a newer check-in), so it has no report. If you sent a new check-in, open the link you saved with that one.</p>
+      <div class="row"><button class="btn" id="fresh" type="button">Start a new check-in</button></div></div>`;
+    // This browser may still hold the withdrawn check-in; forget it (keep name, ID and email) so the form starts again.
+    $("fresh").onclick = () => {
+      let p = {};
+      try { p = (JSON.parse(localStorage.getItem(KEY) || "{}").profile) || {}; } catch (e) {}
+      st = blank(); Object.assign(st.profile, p, { teamRole: "" }); save();
+      location.href = "/";
+    };
   }
 
   async function checkResult(el, id, r, manual) {
