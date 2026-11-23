@@ -175,7 +175,7 @@ app.post("/api/submit", limiter(60, 10), async (req, res) => {
   try {
     await store.addSubmission(row, evidenceRows);
   } catch (e) {
-    if (e.message === "already_submitted") return fail(res, 409, "already_submitted", `You already submitted a check-in for ${config.cycleName} on ${String(e.submittedAt).slice(0, 10)}. Contact the survey owner if you need to change it.`);
+    if (e.message === "already_submitted") return fail(res, 409, "already_submitted", `You already submitted a check-in for ${config.cycleName} on ${String(e.submittedAt).slice(0, 10)}. To send a new one, ask ${config.surveyOwner} to approve it. Once approved, click Submit my check-in again: your answers stay on this page.`);
     console.error("submit failed:", e.message);
     return fail(res, 502, "save_failed", "Your answers could not be saved right now. Keep this page open and try Submit again in a minute.");
   }
@@ -354,9 +354,26 @@ app.post("/admin/api/review", auth.requireReviewer, sameOrigin, async (req, res)
 });
 
 app.post("/admin/api/status", auth.requireReviewer, auth.requireAdmin, sameOrigin, async (req, res) => {
-  const status = str(req.body.status, 20);
-  if (!["Submitted", "Deleted"].includes(status)) return fail(res, 400, "bad_status", "Unknown status.");
-  try { await store.setStatus(str(req.body.submissionId, 20), status); res.json({ ok: true }); }
+  // Submitted: counts. Deleted: removed. Test: a trial entry. Reopened: the surveyor approved a
+  // new check-in for this person. Only "Submitted" blocks a new check-in, and only it is assessed.
+  const status = str(req.body.status, 20), id = str(req.body.submissionId, 20);
+  if (!["Submitted", "Deleted", "Test", "Reopened"].includes(status)) return fail(res, 400, "bad_status", "Unknown status.");
+  try {
+    if (status === "Submitted") {
+      const all = await store.listResponses(), r = all.find(x => x["Submission ID"] === id);
+      const other = r && all.find(x => x !== r && x.Status === "Submitted" && x.Cycle === r.Cycle
+        && String(x["Respondent ID (Employee ID)"]).trim().toLowerCase() === String(r["Respondent ID (Employee ID)"]).trim().toLowerCase());
+      if (other) return fail(res, 409, "newer_exists", `This person has a newer check-in (${String(other["Submitted at (UTC)"]).slice(0, 10)}). Only one can count.`);
+    }
+    // The approval is recorded in the results Excel itself (Responses sheet), next to Status.
+    const u = req.session.user || {};
+    const by = config.mock && process.env.SURVEY_OWNER ? config.surveyOwner : (u.name || u.email || "admin");
+    await store.setStatus(id, status, {
+      "New check-in approved": status === "Reopened" ? "Yes" : "",
+      "Status changed by": by, "Status changed on (UTC)": new Date().toISOString().slice(0, 16).replace("T", " ")
+    });
+    res.json({ ok: true });
+  }
   catch (e) { console.error("status failed:", e.message); fail(res, 502, "save_failed", "The change could not be saved."); }
 });
 

@@ -21,7 +21,10 @@ const C_COLS = Array.from({ length: 10 }, (_, i) => "C" + String(i + 1).padStart
 const RESPONSE_HEADERS = ["Respondent ID (Employee ID)", "Name", "Department", "Role", "Date"]
   .concat(R_COLS, C_COLS, ["Email", "Team role", "Status", "Answered", "Total score", "Score %",
     "Current level", "Level name", "Level score", "Provisional tier", "Examples",
-    "Examples accepted", "Examples to review", "Cycle", "Submission ID", "Submitted at (UTC)"]);
+    "Examples accepted", "Examples to review", "Cycle", "Submission ID", "Submitted at (UTC)",
+    // Set by the admin page when the surveyor changes a check-in's status (approve a new
+    // check-in, mark as test, delete): the record of who approved what, and when.
+    "New check-in approved", "Status changed by", "Status changed on (UTC)"]);
 
 const EVIDENCE_HEADERS = ["Submission ID", "Cycle", "Employee ID", "Name", "Email", "Department",
   "Team role", "Questionnaire", "Question ID", "Level", "Use case", "Answer", "Example",
@@ -136,11 +139,11 @@ class ExcelStore {
     });
   }
 
-  setStatus(submissionId, status) {
+  setStatus(submissionId, status, extra = {}) {
     return this.serial(async () => {
       const resp = (await this.listResponses()).find(r => r["Submission ID"] === submissionId);
       if (!resp) throw new Error("submission_not_found");
-      resp.Status = status;
+      Object.assign(resp, extra, { Status: status });
       await this.patchRow(T.responses, resp._index, toValues(RESPONSE_HEADERS, resp));
     });
   }
@@ -176,6 +179,9 @@ class LocalFileStore {
     if (!ws.getRow(1).getCell(1).value) {
       headers.forEach((h, i) => { ws.getRow(1).getCell(i + 1).value = h; });
       ws.getRow(1).font = { bold: true };
+    } else {
+      // A file made before newer columns were added: give them their headers.
+      headers.forEach((h, i) => { const c = ws.getRow(1).getCell(i + 1); if (!c.value) { c.value = h; c.font = { bold: true }; } });
     }
     return ws;
   }
@@ -373,13 +379,13 @@ class LocalFileStore {
     });
   }
 
-  setStatus(submissionId, status) {
+  setStatus(submissionId, status, extra = {}) {
     return this.serial(async () => {
       const wb = await this.load();
       const rs = wb.getWorksheet("Responses");
       const resp = this.rows(rs, RESPONSE_HEADERS).find(r => r["Submission ID"] === submissionId);
       if (!resp) throw new Error("submission_not_found");
-      resp.Status = status;
+      Object.assign(resp, extra, { Status: status });
       this.writeRow(rs, resp._index, RESPONSE_HEADERS, resp);
       await this.save(wb);
     });
@@ -420,10 +426,10 @@ class MemoryStore {
     const resp = this.responses.find(r => r["Submission ID"] === submissionId);
     if (resp) { resp["Examples accepted"] = mine.filter(e => e["Reviewer decision"] === "Accepted").length; resp["Examples to review"] = mine.filter(e => !e["Reviewer decision"]).length; }
   }
-  async setStatus(submissionId, status) {
+  async setStatus(submissionId, status, extra = {}) {
     const resp = this.responses.find(r => r["Submission ID"] === submissionId);
     if (!resp) throw new Error("submission_not_found");
-    resp.Status = status;
+    Object.assign(resp, extra, { Status: status });
   }
   async saveAssessment() { return false; }
   async listAssessmentEvidence() { return []; }

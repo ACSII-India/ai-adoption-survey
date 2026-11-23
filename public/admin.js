@@ -85,7 +85,17 @@
     const evs = evFor(sel);
     if (evs.length) h += "<h3>Evidence</h3>" + evs.map(evCard).join("");
     h += `<h3>Answers</h3><div class="tw"><table><tbody>${[0, 10, 20].map(i => `<tr>${answers.slice(i, i + 10).join("")}</tr>`).join("")}</tbody></table></div>`;
-    if (me.role === "admin") h += `<div class="row">${r.Status === "Deleted" ? '<button class="btn ghost" id="restore" type="button">Restore this response</button>' : '<button class="btn ghost" id="del" type="button">Mark as deleted</button>'}<span class="hint">Admin only. The row stays in the Excel file with status Deleted.</span></div>`;
+    if (me.role === "admin") {
+      h += `<h3>Check-in status</h3><p class="hint" style="margin-top:0">${{
+        Submitted: "Counts in the assessment. While it does, this person cannot send another check-in in this cycle.",
+        Reopened: "You approved a new check-in. This one no longer counts; the person can submit again.",
+        Test: "Marked as a test entry. It does not count, and the person can send their real check-in.",
+        Deleted: "Deleted. It does not count, and the person can submit again."
+      }[r.Status] || ""}${r["Status changed by"] ? ` <br>Changed to ${esc(r.Status)} by ${esc(r["Status changed by"])} on ${esc(r["Status changed on (UTC)"])} UTC.` : ""}</p><div class="row">`;
+      if (r.Status === "Submitted") h += '<button class="btn" id="reopen" type="button">Approve a new check-in</button><button class="btn ghost" id="test" type="button">Mark as test entry</button><button class="btn ghost" id="del" type="button">Mark as deleted</button>';
+      else h += '<button class="btn ghost" id="restore" type="button">Count this check-in again</button>';
+      h += '<span class="hint">Admin only. The row always stays in the Excel file.</span></div>';
+    }
     box.innerHTML = h + "</div>";
     bindReviews(box);
     // Report status and the personal link, for someone who lost theirs.
@@ -105,6 +115,8 @@
     })();
     const setStatus = async status => { try { await post("/admin/api/status", { submissionId: sel, status }); await load(); } catch (e) { alert(e.message); } };
     if ($("del")) $("del").onclick = () => { if (confirm(`Mark the response from ${r.Name} as deleted?`)) setStatus("Deleted"); };
+    if ($("reopen")) $("reopen").onclick = () => { if (confirm(`Approve a new check-in for ${r.Name}? This check-in will stop counting and they can submit again.`)) setStatus("Reopened"); };
+    if ($("test")) $("test").onclick = () => { if (confirm(`Mark the check-in from ${r.Name} as a test entry? It will stop counting and they can send their real check-in.`)) setStatus("Test"); };
     if ($("restore")) $("restore").onclick = () => setStatus("Submitted");
   }
 

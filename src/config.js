@@ -60,6 +60,8 @@ module.exports = {
 
   // Survey rules
   cycleName: env.CYCLE_NAME || "Baseline",
+  // Named in the "already submitted" message: the person who approves a new check-in.
+  surveyOwner: env.SURVEY_OWNER || "the survey owner",
   allowResubmit: bool("ALLOW_RESUBMIT", false),
   allowedEmailDomains: (env.ALLOWED_EMAIL_DOMAINS || "").split(",").map(s => s.trim().toLowerCase()).filter(Boolean),
   requireEmailCode: bool("REQUIRE_EMAIL_CODE", false),

@@ -45,6 +45,16 @@ flowchart TD
 
 The person enters name, employee ID, email and team role; the survey picks the questionnaire for that role. Each question has answers A–E. Answers of D or E at Levels 5–7 ask for an example (what was done, how it was checked, how often); a follow-up question may be asked when the example is thin. Every submission is written to the results Excel file (`Responses` and `Evidence` sheets).
 
+### One check-in per person per cycle, with surveyor approval
+
+A second check-in from the same Employee ID in the same cycle is blocked with a message naming the surveyor (`SURVEY_OWNER`). The person's answers stay on the page. On `/admin` the surveyor opens the earlier check-in and chooses:
+
+- **Approve a new check-in**: status `Reopened`, `New check-in approved` = Yes. The person clicks Submit again and the new check-in counts.
+- **Mark as test entry**: status `Test`, for trial runs before the real survey. The person can then send their real check-in.
+- **Mark as deleted**: status `Deleted`.
+
+Every change is recorded in the results Excel itself (Responses sheet: `Status`, `New check-in approved`, `Status changed by`, `Status changed on (UTC)`). Only `Submitted` check-ins are assessed; the scripts and the skill skip `Reopened`, `Test`, `Deleted` and `Superseded` rows (`excludeStatuses` in `assessment/rules.json`).
+
 ### 2. The result page
 
 - **No examples to judge:** the report appears as soon as the survey is submitted: a summary (level, score, what is needed for the next level), the one-page report, and **Download PDF**.
