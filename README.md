@@ -47,13 +47,13 @@ The person enters name, employee ID, email and team role; the survey picks the q
 
 ### One check-in per person per cycle, with surveyor approval
 
-A second check-in from the same Employee ID in the same cycle is blocked with a message naming the surveyor (`SURVEY_OWNER`). The person's answers stay on the page. On `/admin` the surveyor opens the earlier check-in and chooses:
+A second check-in from the same Employee ID in the same cycle is blocked. The attempt itself is the request: the survey stamps `New check-in requested (UTC)` on the earlier check-in and tells the person their request has gone to the surveyor (`SURVEY_OWNER`); their answers stay on the page. The surveyor sees **New check-in requests waiting for approval** at the top of `/admin` (and the same column in the Excel file), opens the earlier check-in and chooses:
 
 - **Approve a new check-in**: status `Reopened`, `New check-in approved` = Yes. The person clicks Submit again and the new check-in counts.
 - **Mark as test entry**: status `Test`, for trial runs before the real survey. The person can then send their real check-in.
 - **Mark as deleted**: status `Deleted`.
 
-Every change is recorded in the results Excel itself (Responses sheet: `Status`, `New check-in approved`, `Status changed by`, `Status changed on (UTC)`). Only `Submitted` check-ins are assessed; the scripts and the skill skip `Reopened`, `Test`, `Deleted` and `Superseded` rows (`excludeStatuses` in `assessment/rules.json`).
+Every change is recorded in the results Excel itself (Responses sheet: `Status`, `New check-in requested (UTC)`, `New check-in approved`, `Status changed by`, `Status changed on (UTC)`). Only `Submitted` check-ins are assessed; the scripts and the skill skip `Reopened`, `Test`, `Deleted` and `Superseded` rows (`excludeStatuses` in `assessment/rules.json`).
 
 ### 2. The result page
 

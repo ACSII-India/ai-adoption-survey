@@ -35,6 +35,10 @@
       <div class="row" style="margin-top:0">${me.mock ? "" : '<a class="btn" href="/admin/api/download">Download Excel file</a><button class="btn ghost" id="open" type="button">Open in Excel online</button>'}<button class="btn ghost" id="reload" type="button">Refresh</button></div>
       <div class="row"><button class="chip" type="button" data-tab="people" aria-pressed="${tab === "people"}">People</button><button class="chip" type="button" data-tab="sheet" aria-pressed="${tab === "sheet"}">Spreadsheet view</button><button class="chip" type="button" data-tab="queue" aria-pressed="${tab === "queue"}">Review queue (${pending})</button>
       <label style="display:inline-flex;gap:6px;align-items:center;margin-left:8px"><input type="checkbox" id="all" style="width:auto" ${showAll ? "checked" : ""}> Include superseded and deleted</label></div>`;
+    const asks = data.responses.filter(r => r.Status === "Submitted" && r["New check-in requested (UTC)"]);
+    if (asks.length && me.role === "admin") h += `<div class="panel" style="margin:12px 0 0;border-left:4px solid #b45309"><h3 style="margin-top:0">New check-in requests waiting for approval (${asks.length})</h3>
+      <p class="hint" style="margin-top:0">These people tried to submit again. Open each one and choose Approve a new check-in, or Mark as test entry if the earlier one was a trial.</p>
+      <div class="tw"><table><tbody>${asks.map(r => `<tr class="click" tabindex="0" data-id="${esc(r["Submission ID"])}"><td>${esc(r.Name)}</td><td>${esc(r["Respondent ID (Employee ID)"])}</td><td>first check-in ${esc(String(r["Submitted at (UTC)"]).slice(0, 10))}</td><td>asked ${esc(r["New check-in requested (UTC)"])} UTC</td></tr>`).join("")}</tbody></table></div></div>`;
     if (!rows.length) h += '<p>No responses yet.</p>';
     else if (tab === "sheet") {
       const cols = Object.keys(rows[0]);
@@ -87,7 +91,7 @@
     h += `<h3>Answers</h3><div class="tw"><table><tbody>${[0, 10, 20].map(i => `<tr>${answers.slice(i, i + 10).join("")}</tr>`).join("")}</tbody></table></div>`;
     if (me.role === "admin") {
       h += `<h3>Check-in status</h3><p class="hint" style="margin-top:0">${{
-        Submitted: "Counts in the assessment. While it does, this person cannot send another check-in in this cycle.",
+        Submitted: r["New check-in requested (UTC)"] ? `<strong>This person asked to send a new check-in (${esc(r["New check-in requested (UTC)"])} UTC).</strong> Approve it, or mark this one as a test entry if it was a trial.` : "Counts in the assessment. While it does, this person cannot send another check-in in this cycle.",
         Reopened: "You approved a new check-in. This one no longer counts; the person can submit again.",
         Test: "Marked as a test entry. It does not count, and the person can send their real check-in.",
         Deleted: "Deleted. It does not count, and the person can submit again."

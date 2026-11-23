@@ -175,7 +175,16 @@ app.post("/api/submit", limiter(60, 10), async (req, res) => {
   try {
     await store.addSubmission(row, evidenceRows);
   } catch (e) {
-    if (e.message === "already_submitted") return fail(res, 409, "already_submitted", `You already submitted a check-in for ${config.cycleName} on ${String(e.submittedAt).slice(0, 10)}. To send a new one, ask ${config.surveyOwner} to approve it. Once approved, click Submit my check-in again: your answers stay on this page.`);
+    if (e.message === "already_submitted") {
+      // Record the request on the earlier check-in (Responses sheet), so the surveyor sees it on
+      // the admin page and in the Excel file. Approving it is the surveyor's decision.
+      let noted = false;
+      try { if (e.submissionId) { await store.setStatus(e.submissionId, "Submitted", { "New check-in requested (UTC)": now.slice(0, 16).replace("T", " ") }); noted = true; } }
+      catch (err) { console.error("request note failed:", err.message); }
+      return fail(res, 409, "already_submitted", `You already submitted a check-in for ${config.cycleName} on ${String(e.submittedAt).slice(0, 10)}. ${noted
+        ? `Your request for a new one has been sent to ${config.surveyOwner} for approval.`
+        : `To send a new one, ask ${config.surveyOwner} to approve it.`} Once approved, click Submit my check-in again: keep this page open, your answers stay here.`);
+    }
     console.error("submit failed:", e.message);
     return fail(res, 502, "save_failed", "Your answers could not be saved right now. Keep this page open and try Submit again in a minute.");
   }

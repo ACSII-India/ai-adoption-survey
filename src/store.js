@@ -24,7 +24,7 @@ const RESPONSE_HEADERS = ["Respondent ID (Employee ID)", "Name", "Department", "
     "Examples accepted", "Examples to review", "Cycle", "Submission ID", "Submitted at (UTC)",
     // Set by the admin page when the surveyor changes a check-in's status (approve a new
     // check-in, mark as test, delete): the record of who approved what, and when.
-    "New check-in approved", "Status changed by", "Status changed on (UTC)"]);
+    "New check-in requested (UTC)", "New check-in approved", "Status changed by", "Status changed on (UTC)"]);
 
 const EVIDENCE_HEADERS = ["Submission ID", "Cycle", "Employee ID", "Name", "Email", "Department",
   "Team role", "Questionnaire", "Question ID", "Level", "Use case", "Answer", "Example",
@@ -112,6 +112,7 @@ class ExcelStore {
       if (prior.length && !config.allowResubmit) {
         const e = new Error("already_submitted");
         e.submittedAt = prior[0]["Submitted at (UTC)"];
+        e.submissionId = prior[0]["Submission ID"];
         throw e;
       }
       for (const p of prior) {
@@ -347,6 +348,7 @@ class LocalFileStore {
       if (prior.length && !config.allowResubmit) {
         const e = new Error("already_submitted");
         e.submittedAt = prior[0]["Submitted at (UTC)"];
+        e.submissionId = prior[0]["Submission ID"];
         throw e;
       }
       for (const p of prior) {
@@ -413,7 +415,7 @@ class MemoryStore {
   async addSubmission(response, evidence) {
     const prior = this.responses.filter(r => same(r["Respondent ID (Employee ID)"], response["Respondent ID (Employee ID)"])
       && r.Cycle === response.Cycle && r.Status === "Submitted");
-    if (prior.length && !config.allowResubmit) { const e = new Error("already_submitted"); e.submittedAt = prior[0]["Submitted at (UTC)"]; throw e; }
+    if (prior.length && !config.allowResubmit) { const e = new Error("already_submitted"); e.submittedAt = prior[0]["Submitted at (UTC)"]; e.submissionId = prior[0]["Submission ID"]; throw e; }
     prior.forEach(p => { p.Status = "Superseded"; });
     this.responses.push(plain(RESPONSE_HEADERS, response));
     evidence.forEach(e => this.evidence.push(plain(EVIDENCE_HEADERS, e)));
