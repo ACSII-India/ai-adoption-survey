@@ -5,7 +5,9 @@
   let cfg = null, bank = null, st = null, busy = false, keyPick = null;
   const $ = id => document.getElementById(id);
   const esc = s => String(s == null ? "" : s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
-  const blank = () => ({ profile: { name: "", empId: "", email: "", teamRole: "" }, qset: "", answers: {}, evidence: {}, verifyToken: "", submitted: null });
+  // The profile comes from the employee list (standard master sheet) by Employee ID;
+  // people on probation without an ID use their work email (lookupEmail).
+  const blank = () => ({ profile: { found: false, name: "", empId: "", email: "", teamRole: "", qset: "", probation: false, lookupEmail: "" }, qset: "", answers: {}, evidence: {}, verifyToken: "", submitted: null });
   const save = () => { try { localStorage.setItem(KEY, JSON.stringify(st)); } catch (e) {} };
   const qs = () => Scoring.questionsFor(bank, st.qset);
   const scale = lv => Scoring.scaleFor(bank, lv);
@@ -20,9 +22,8 @@
   function nextStep() {
     const p = st.profile;
     if (st.submitted) return { t: "done" };
-    if (!p.name || !p.empId || !p.email) return { t: "profile" };
+    if (!p.found || !st.qset) return { t: "profile" };
     if (cfg.requireEmailCode && !st.verifyToken) return { t: "verify" };
-    if (!st.qset) return { t: "role" };
     for (const q of qs()) {
       const a = st.answers[q.id];
       if (!a) return { t: "q", q };
@@ -45,13 +46,9 @@
   function render() {
     const p = st.profile, parts = [];
     parts.push(bubble("bot", `Hi! This check-in places you on the 7-level AI adoption scale for your role (${esc(cfg.cycle)}). It takes about 12 minutes: 30 multiple-choice questions, plus a short example whenever you claim advanced use (Level 5 and above).\n\nAnswer for what you do today, not what you plan to do. Do not paste customer data, credentials, or confidential content; describe it and add a link instead.`));
-    if (p.name && p.empId && p.email) {
+    if (p.found && st.qset) {
       parts.push(bubble("bot", "First, your details."));
-      parts.push(bubble("me", `${esc(p.name)}\nEmployee ID: ${esc(p.empId)}\n${esc(p.email)}`));
-    }
-    if (st.qset) {
-      parts.push(bubble("bot", "Which team role fits you best?"));
-      parts.push(bubble("me", esc(p.teamRole)));
+      parts.push(bubble("me", `${esc(p.name)}\n${p.probation ? "Employee ID: not assigned yet (on probation)" : "Employee ID: " + esc(p.empId)}\n${esc(p.email)}\nRole: ${esc(p.teamRole)}`));
       parts.push(bubble("bot", `Thanks. You will answer the ${esc(bank.questionnaires[st.qset].name)} questions: 20 for the role and 10 shared across all roles.`));
       const list = qs();
       list.forEach((q, i) => {
@@ -98,27 +95,50 @@
     const undoBtn = Object.keys(st.answers).length ? '<button class="btn ghost" id="undo" type="button">Change my last answer</button>' : "";
 
     if (step.t === "profile") {
-      // No department field: group views take department, project team and BU
-      // from the HR/org file by employee ID, so nothing is typed by hand.
-      const domains = cfg.allowedEmailDomains.length ? ` (${cfg.allowedEmailDomains.map(d => "@" + d).join(" or ")})` : "";
-      el.innerHTML = `<div class="panel"><div class="grid2f">
-        <div><label class="f" for="nm">Name</label><input id="nm" autocomplete="name" maxlength="100"></div>
-        <div><label class="f" for="eid">Employee ID</label><input id="eid" maxlength="40"></div>
-        <div><label class="f" for="em">Work email${esc(domains)}</label><input id="em" type="email" autocomplete="email" maxlength="200"></div></div>
-        <p class="err" id="perr" role="alert"></p><div class="row"><button class="btn" id="go" type="button">Continue</button></div></div>`;
-      const p = st.profile; $("nm").value = p.name; $("eid").value = p.empId; $("em").value = p.email;
-      $("go").onclick = () => {
-        const v = { name: $("nm").value.trim(), empId: $("eid").value.trim(), email: $("em").value.trim().toLowerCase() };
-        const dom = v.email.split("@")[1] || "";
-        const bad = !v.name ? ["nm", "Enter your name."]
-          : !/^[A-Za-z0-9._-]{2,40}$/.test(v.empId) ? ["eid", "Enter your employee ID (letters, digits, dot, dash, or underscore)."]
-          : !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.email) ? ["em", "Enter a valid email address."]
-          : (cfg.allowedEmailDomains.length && !cfg.allowedEmailDomains.includes(dom)) ? ["em", "Use your work email address."] : null;
-        if (bad) { $("perr").textContent = bad[1]; $(bad[0]).focus(); return; }
-        if (v.email !== st.profile.email) st.verifyToken = "";
-        Object.assign(st.profile, v); save(); render();
+      // Employee ID only (or work email when on probation); name, email and role
+      // are filled in from the employee list and cannot be changed here.
+      const owner = esc(cfg.surveyOwner || "the survey owner") + (cfg.surveyOwnerContact ? ` (${esc(cfg.surveyOwnerContact)})` : "");
+      let found = null, probation = false;
+      const ask = () => {
+        el.innerHTML = `<div class="panel"><p style="margin:0 0 10px">${probation ? "Enter your work email." : "Enter your Employee ID."}</p>
+          <div class="grid2f"><div>${probation
+            ? '<label class="f" for="lk">Work email</label><input id="lk" type="email" autocomplete="email" maxlength="200">'
+            : '<label class="f" for="lk">Employee ID</label><input id="lk" autocomplete="off" spellcheck="false" maxlength="40" placeholder="For example ACSIT-014">'}</div></div>
+          <p class="err" id="perr" role="alert"></p>
+          <div class="row"><button class="btn" id="find" type="button">Find me</button>
+          <button class="btn ghost" id="alt" type="button">${probation ? "I have an Employee ID" : "I don't have an Employee ID yet"}</button></div></div>`;
+        const go = async () => {
+          const v = $("lk").value.trim();
+          if (!v) { $("perr").textContent = probation ? "Enter your work email." : "Enter your Employee ID."; $("lk").focus(); return; }
+          $("find").disabled = true; $("perr").textContent = "";
+          try { found = await api("/api/people/lookup", probation ? { email: v.toLowerCase() } : { empId: v }); found.lookupEmail = probation ? v.toLowerCase() : ""; show(); }
+          catch (e) { $("perr").textContent = e.message; $("find").disabled = false; $("lk").focus(); }
+        };
+        $("find").onclick = go;
+        $("lk").onkeydown = e => { if (e.key === "Enter") { e.preventDefault(); go(); } };
+        $("alt").onclick = () => { probation = !probation; ask(); };
+        $("lk").focus();
       };
-      $("nm").focus(); return;
+      const show = () => {
+        const f = found;
+        el.innerHTML = `<div class="panel"><p style="margin:0 0 10px">Check that these are your details.</p><div class="grid2f">
+          <div><label class="f" for="nm">Name</label><input id="nm" value="${esc(f.name)}" disabled></div>
+          <div><label class="f" for="eid">Employee ID</label><input id="eid" value="${esc(f.probation ? "Not assigned yet (on probation)" : f.empId)}" disabled></div>
+          <div><label class="f" for="em">Work email</label><input id="em" value="${esc(f.emailShown)}" disabled></div>
+          <div><label class="f" for="rl">Role</label><input id="rl" value="${esc(f.teamRole)}" disabled></div></div>
+          <p class="hint" style="margin:10px 0 0">You will answer the ${esc(f.questionnaire)} questions. Something not right? Message ${owner} on Microsoft Teams.</p>
+          <div class="row"><button class="btn" id="go" type="button">Continue</button><button class="btn ghost" id="notme" type="button">This is not me</button></div></div>`;
+        $("notme").onclick = () => { found = null; ask(); };
+        $("go").onclick = () => {
+          // Answers already given stay only if the questionnaire is the same.
+          if (st.qset !== f.qset) { st.answers = {}; st.evidence = {}; }
+          if (f.lookupEmail !== st.profile.lookupEmail || f.empId !== st.profile.empId) st.verifyToken = "";
+          st.profile = { found: true, name: f.name, empId: f.empId, email: f.emailShown, teamRole: f.teamRole, qset: f.qset, probation: !!f.probation, lookupEmail: f.lookupEmail };
+          st.qset = f.qset; save(); render();
+        };
+        $("go").focus();
+      };
+      ask(); return;
     }
 
     if (step.t === "verify") {
@@ -126,23 +146,17 @@
         <div class="row" style="margin-top:0"><button class="btn" id="send" type="button">Email me a code</button><button class="btn ghost" id="edit" type="button">Change my details</button></div>
         <div id="codebox" hidden><label class="f" for="code" style="margin-top:12px">Code</label><input id="code" inputmode="numeric" maxlength="6" autocomplete="one-time-code"><div class="row"><button class="btn" id="check" type="button">Confirm</button></div></div>
         <p class="err" id="verr" role="alert"></p></div>`;
-      $("edit").onclick = () => { st.profile.empId = ""; save(); render(); };
+      $("edit").onclick = () => { st.profile.found = false; save(); render(); };
       $("send").onclick = async () => {
         $("send").disabled = true; $("verr").textContent = "";
-        try { await api("/api/verify/start", { email: st.profile.email }); $("codebox").hidden = false; $("send").textContent = "Send again"; $("code").focus(); }
+        try { await api("/api/verify/start", { profile: st.profile }); $("codebox").hidden = false; $("send").textContent = "Send again"; $("code").focus(); }
         catch (e) { $("verr").textContent = e.message; }
         $("send").disabled = false;
       };
       $("check").onclick = async () => {
-        try { const r = await api("/api/verify/check", { email: st.profile.email, code: $("code").value.trim() }); st.verifyToken = r.token; save(); render(); }
+        try { const r = await api("/api/verify/check", { profile: st.profile, code: $("code").value.trim() }); st.verifyToken = r.token; save(); render(); }
         catch (e) { $("verr").textContent = e.message; }
       };
-      return;
-    }
-
-    if (step.t === "role") {
-      el.innerHTML = `<div class="panel"><p style="margin:0 0 10px">Choose your team role.</p><div class="chips">${bank.roleMap.map((r, i) => `<button class="chip" type="button" data-i="${i}">${esc(r.teamRole)}</button>`).join("")}</div></div>`;
-      el.querySelectorAll(".chip").forEach(b => b.onclick = () => { const r = bank.roleMap[+b.dataset.i]; st.profile.teamRole = r.teamRole; st.qset = r.questionnaire; save(); render(); });
       return;
     }
 
@@ -250,7 +264,7 @@
     // "Download PDF" opens the browser print dialog for the report; choose "Save as PDF".
     $("pdf").onclick = () => { try { f.contentWindow.focus(); f.contentWindow.print(); } catch (e) {} };
     bindLink(id, r);
-    if ($("again")) $("again").onclick = () => { if (confirm("Start a new check-in? Your submitted one stays on record.")) { const p = st.profile; st = blank(); st.profile = Object.assign(p, { teamRole: "" }); save(); render(); } };
+    if ($("again")) $("again").onclick = () => { if (confirm("Start a new check-in? Your submitted one stays on record.")) { const p = st.profile; st = blank(); st.profile = p; st.qset = p.qset || ""; save(); render(); } };
   }
 
   function showPending(el, { id, r }) {
@@ -270,11 +284,11 @@
     el.innerHTML = `<div class="panel"><h2>This check-in was withdrawn</h2>
       <p style="margin:0">The survey owner withdrew this check-in (for example a test entry, or replaced by a newer check-in), so it has no report. If you sent a new check-in, open the link you saved with that one.</p>
       <div class="row"><button class="btn" id="fresh" type="button">Start a new check-in</button></div></div>`;
-    // This browser may still hold the withdrawn check-in; forget it (keep name, ID and email) so the form starts again.
+    // This browser may still hold the withdrawn check-in; forget it (keep the person and their role) so the form starts again.
     $("fresh").onclick = () => {
       let p = {};
       try { p = (JSON.parse(localStorage.getItem(KEY) || "{}").profile) || {}; } catch (e) {}
-      st = blank(); Object.assign(st.profile, p, { teamRole: "" }); save();
+      st = blank(); Object.assign(st.profile, p); st.qset = st.profile.qset || ""; save();
       location.href = "/";
     };
   }

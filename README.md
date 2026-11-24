@@ -43,7 +43,7 @@ flowchart TD
 
 ### 1. Taking the survey
 
-The person enters name, employee ID, email and team role; the survey picks the questionnaire for that role. Each question has answers A–E. Answers of D or E at Levels 5–7 ask for an example (what was done, how it was checked, how often); a follow-up question may be asked when the example is thin. Every submission is written to the results Excel file (`Responses` and `Evidence` sheets).
+The person enters their Employee ID (people on probation without one use their work email). Name, email and role are filled in, greyed out, from the employee list: the standard master sheet `mis-dashboard/docs/ACSII_Employee_Master_Standard.xlsx` (tab `Employees`), which the backup job sends to the survey with `scripts/sync-people.js` whenever the survey does not have it (after a restart or an edit). Master sheet roles map to survey team roles through `roleAliases` in `data/questions.json`, and the team role picks the questionnaire. The server always records the details from the list, never what the browser sent. People on probation are recorded under a stand-in ID, `PROB-<email name>`, until they have an Employee ID. Each question has answers A–E. Answers of D or E at Levels 5–7 ask for an example (what was done, how it was checked, how often); a follow-up question may be asked when the example is thin. Every submission is written to the results Excel file (`Responses` and `Evidence` sheets).
 
 ### One check-in per person per cycle, with surveyor approval
 
@@ -110,7 +110,7 @@ Group levels (team, role, BU, organisation) use the median person and are shown 
 | --- | --- |
 | `src/` | Survey server (Express): submit, result link, admin, Excel storage |
 | `public/` | Survey and admin pages |
-| `data/questions.json` | Questionnaires, team role → questionnaire map |
+| `data/questions.json` | Questionnaires, team role → questionnaire map, master sheet role → team role (`roleAliases`) |
 | `assessment/` | Rule engine (`rules.json`, `RUBRIC.md`, `lib.js`), `prepare.js`, `report.js`, report templates, history |
 | `assessment/auto/` | Automatic per-submission job |
 | `assessment/sample/` | Sample data generator, expected results, reference judgements, `compare.js` |
@@ -135,7 +135,7 @@ Open <http://localhost:3000>; sign in to `/admin` with `/auth/signin?as=admin`.
 DEV_MOCK=true NODE_ENV=development EXCEL_LOCAL_PATH="/tmp/AI Survey Results 2026.xlsx" ENABLE_RESULTS_EMAIL=false REQUIRE_EMAIL_CODE=false npm start
 ```
 
-Environment: `NODE_VERSION=22`, `BASE_URL`, `SESSION_SECRET`, `RESULTS_TOKEN`, `CYCLE_NAME`, `ALLOWED_EMAIL_DOMAINS`, `ALLOW_RESUBMIT`, plus the values in `.env.example`.
+Environment: `NODE_VERSION=22`, `BASE_URL`, `SESSION_SECRET`, `RESULTS_TOKEN`, `ADMIN_PASSCODE` or `PASSCODE` (trial mode: the surveyor's passcode for `/admin`; without it the admin page is switched off), `SURVEY_OWNER`, `CYCLE_NAME`, `ALLOWED_EMAIL_DOMAINS`, `ALLOW_RESUBMIT`, plus the values in `.env.example`.
 
 **Timers on the surveyor's machine** (systemd user units in `scripts/systemd/`):
 

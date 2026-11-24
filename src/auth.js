@@ -21,13 +21,35 @@ function rolesToAccess(roles) {
   return { isAdmin, isReviewer };
 }
 
+// Trial mode (DEV_MOCK): only the surveyor signs in, with ADMIN_PASSCODE.
+// Without a passcode, trial sign-in works only when the app runs on localhost.
+const trialOpen = () => !config.adminPasscode && /^http:\/\/(localhost|127\.0\.0\.1)(:|\/|$)/.test(config.baseUrl);
+const sha = s => crypto.createHash("sha256").update(String(s)).digest();
+function trialSession(req, res) {
+  req.session.regenerate(() => {
+    req.session.user = { id: "surveyor", name: config.surveyOwner, email: "", isAdmin: true, isReviewer: true };
+    res.redirect("/admin");
+  });
+}
+function passcodePage(msg) {
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  return `<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Surveyor sign-in</title><link rel="stylesheet" href="/styles.css"><main class="narrow"><h1>Surveyor sign-in</h1><p>This page is only for the surveyor.</p>
+<form method="post" action="/auth/signin"><label class="f" for="pc">Passcode</label><input id="pc" name="passcode" type="password" autocomplete="current-password" maxlength="200" required autofocus>
+${msg ? `<p class="err" role="alert">${esc(msg)}</p>` : ""}<div class="row"><button class="btn" type="submit">Sign in</button></div></form><p><a href="/">Back to the check-in page</a></p></main>`;
+}
+function signInWithPasscode(req, res) {
+  if (!config.mock) return res.status(404).end();
+  if (!config.adminPasscode) return trialOpen() ? trialSession(req, res) : res.status(403).send(page("Sign-in switched off", "The surveyor sign-in is not set up on this server."));
+  const given = String((req.body && req.body.passcode) || "");
+  if (!crypto.timingSafeEqual(sha(given), sha(config.adminPasscode))) return res.status(401).send(passcodePage("That passcode is not right."));
+  trialSession(req, res);
+}
+
 function signIn(req, res) {
   if (config.mock) {
-    const as = req.query.as === "reviewer" ? "reviewer" : "admin";
-    return req.session.regenerate(() => {
-      req.session.user = { id: "dev-" + as, name: as === "admin" ? "Dev Admin" : "Dev Reviewer", email: "", isAdmin: as === "admin", isReviewer: true };
-      res.redirect("/admin");
-    });
+    if (config.adminPasscode) return res.send(passcodePage(""));
+    if (trialOpen()) return trialSession(req, res);
+    return res.status(403).send(page("Sign-in switched off", "The surveyor sign-in is not set up on this server."));
   }
   const state = b64url(crypto.randomBytes(24));
   const nonce = b64url(crypto.randomBytes(24));
@@ -98,4 +120,4 @@ function page(title, text) {
   return `<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${esc(title)}</title><link rel="stylesheet" href="/styles.css"><main class="narrow"><h1>${esc(title)}</h1><p>${esc(text)}</p><p><a href="/admin">Back to the admin page</a></p></main>`;
 }
 
-module.exports = { signIn, redirect, signOut, requireReviewer, requireAdmin };
+module.exports = { signIn, signInWithPasscode, redirect, signOut, requireReviewer, requireAdmin };

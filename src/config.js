@@ -57,6 +57,11 @@ module.exports = {
 
   // Shared secret for the assessment job to upload confirmed reports (POST /api/results/upload)
   resultsToken: env.RESULTS_TOKEN || "",
+  // Trial mode (DEV_MOCK) only: the passcode for the admin page, known only to the surveyor (ADMIN_PASSCODE, or PASSCODE).
+  // Without it, trial sign-in works only on this machine (BASE_URL on localhost).
+  adminPasscode: env.ADMIN_PASSCODE || env.PASSCODE || "",
+  // Employee list (from the standard master sheet), uploaded by the backup job and kept here.
+  peoplePath: env.PEOPLE_PATH || require("path").join(require("os").tmpdir(), "ai-survey-people.json"),
 
   // Survey rules
   cycleName: env.CYCLE_NAME || "Baseline",

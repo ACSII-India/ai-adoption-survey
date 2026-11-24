@@ -998,5 +998,14 @@
    "teamRole": "Data Engineer",
    "questionnaire": "DE"
   }
- ]
+ ],
+ "roleAliases": {
+  "Technical Lead": "Tech Lead",
+  "Technical Lead II": "Tech Lead",
+  "Team Lead": "Tech Lead",
+  "Architect": "Solution Architect",
+  "Architecture": "Solution Architect",
+  "Technical Architecture": "Solution Architect",
+  "Domain Lead": "Domain QA"
+ }
 }

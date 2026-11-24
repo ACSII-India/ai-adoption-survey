@@ -30,7 +30,6 @@ log() { printf '%s %s\n' "$(date '+%Y-%m-%d %H:%M:%S')" "$*" | tee -a "$LOG"; }
 
 work="$(mktemp -d)"
 trap 'rm -rf "$work"' EXIT
-jar="$work/cookies"
 file="$work/results.xlsx"
 
 # Wake the service (a cold start on the Free plan takes up to a minute).
@@ -39,9 +38,33 @@ if ! curl -fsS --max-time 120 --retry 2 --retry-delay 10 "$RENDER_URL/healthz" -
   exit 1
 fi
 
-# Trial sign-in as admin, then download the workbook with that session.
-curl -fsS --max-time 60 -c "$jar" -b "$jar" "$RENDER_URL/auth/signin?as=admin" -o /dev/null
-code="$(curl -sS --max-time 120 -b "$jar" -w '%{http_code}' -o "$file" "$RENDER_URL/admin/api/download" || true)"
+# Employee list for the first screen: send the standard master sheet when
+# Render does not have it (after a restart or deploy, or after an edit).
+if [ -s "$HOME/.nvm/nvm.sh" ]; then
+  # shellcheck disable=SC1091
+  . "$HOME/.nvm/nvm.sh" >/dev/null && nvm use --silent 22 >/dev/null || true
+fi
+if command -v node >/dev/null && [ -d "$PROJECT_DIR/node_modules/exceljs" ]; then
+  pmsg="$(RENDER_URL="$RENDER_URL" node "$PROJECT_DIR/scripts/sync-people.js" 2>&1 || true)"
+  [ -z "$pmsg" ] || log "$pmsg"
+fi
+
+# Download the workbook with the job token (RESULTS_TOKEN or
+# assessment/auto/results-token.txt). The token goes in a header file, so it
+# never appears in the process list.
+token="${RESULTS_TOKEN:-}"
+[ -n "$token" ] || token="$(cat "$PROJECT_DIR/assessment/auto/results-token.txt" 2>/dev/null || true)"
+token="$(printf '%s' "$token" | tr -d '[:space:]')"
+if [ -z "$token" ]; then log "ERROR no RESULTS_TOKEN (environment or assessment/auto/results-token.txt)"; exit 1; fi
+printf 'Authorization: Bearer %s\n' "$token" > "$work/auth.hdr"
+unset token
+code="$(curl -sS --max-time 120 -H @"$work/auth.hdr" -w '%{http_code}' -o "$file" "$RENDER_URL/api/results/download" || true)"
+# Older server without the token route (before the surveyor passcode): use the
+# old trial sign-in. Once the passcode is set on Render this no longer works.
+if [ "$code" = "404" ]; then
+  curl -fsS --max-time 60 -c "$work/cookies" -b "$work/cookies" "$RENDER_URL/auth/signin?as=admin" -o /dev/null || true
+  code="$(curl -sS --max-time 120 -b "$work/cookies" -w '%{http_code}' -o "$file" "$RENDER_URL/admin/api/download" || true)"
+fi
 
 if [ "$code" = "501" ]; then
   log "SKIP Render has no EXCEL_LOCAL_PATH set, so there is no file to download"

@@ -15,6 +15,7 @@ const { reviewEvidence } = require("./claude");
 const mail = require("./mailer");
 const auth = require("./auth");
 const results = require("./results");
+const people = require("./people");
 // The assessment engine (same rules as the one-time assessment) builds the
 // report shown on the final page.
 const assess = require("../assessment/lib.js");
@@ -68,15 +69,36 @@ app.get("/api/config", (req, res) => {
   res.json({
     bank, cycle: config.cycleName, requireEmailCode: config.requireEmailCode,
     allowedEmailDomains: config.allowedEmailDomains, resultsEmailEnabled: config.resultsEmailEnabled,
-    allowResubmit: config.allowResubmit, threshold: config.levelThreshold, metScore: config.metScore
+    allowResubmit: config.allowResubmit, surveyOwner: config.surveyOwner, surveyOwnerContact: config.surveyOwnerContact, threshold: config.levelThreshold, metScore: config.metScore
   });
 });
+
+// First screen: find the person in the employee list (standard master sheet).
+// Exact Employee ID only; people on probation (no ID yet) use their work email.
+// The email is shown partly hidden, and lookups are rate-limited.
+const notListed = () => `This isn't on the employee list. Please message ${config.surveyOwner} on Microsoft Teams${config.surveyOwnerContact ? ` (${config.surveyOwnerContact})` : ""}.`;
+app.post("/api/people/lookup", limiter(10, 30), (req, res) => {
+  if (!people.loaded()) return fail(res, 503, "list_not_loaded", "The employee list is being loaded. Please try again in a few minutes.");
+  const empId = str(req.body.empId, 40), email = str(req.body.email, 200).toLowerCase();
+  let p = null;
+  if (empId) p = people.findById(empId);
+  else if (email) {
+    if (people.hasId(email)) return fail(res, 400, "use_id", "You have an Employee ID: please enter that instead.");
+    p = people.findProbation(email);
+  }
+  if (!p) return fail(res, 404, "not_listed", notListed());
+  const pr = people.profileOf(p);
+  res.json({ name: pr.name, empId: p.empId, emailShown: people.mask(pr.email), teamRole: pr.teamRole, qset: pr.qset, questionnaire: bank.questionnaires[pr.qset].name, probation: pr.probation });
+});
+// The person as the server knows them, from what the browser sent.
+const personFrom = p => p && (p.probation ? people.findProbation(str(p.lookupEmail, 200)) : people.findById(str(p.empId, 40)));
 
 // Optional one-time code sent to the participant's work email.
 const codes = new Map(); // email -> { hash, expires, tries }
 app.post("/api/verify/start", limiter(15, 5), async (req, res) => {
   if (!config.requireEmailCode) return res.json({ ok: true, required: false });
-  const email = str(req.body.email, 200).toLowerCase();
+  const known = personFrom(req.body.profile);
+  const email = known ? known.email : str(req.body.email, 200).toLowerCase();
   if (!EMAIL_RE.test(email) || !domainOk(email)) return fail(res, 400, "bad_email", "Use your work email address.");
   const code = String(crypto.randomInt(100000, 1000000));
   codes.set(email, { hash: sha(code + email), expires: Date.now() + 15 * 60 * 1000, tries: 0 });
@@ -90,7 +112,8 @@ app.post("/api/verify/start", limiter(15, 5), async (req, res) => {
   }
 });
 app.post("/api/verify/check", limiter(15, 20), (req, res) => {
-  const email = str(req.body.email, 200).toLowerCase(), code = str(req.body.code, 10);
+  const known = personFrom(req.body.profile);
+  const email = known ? known.email : str(req.body.email, 200).toLowerCase(), code = str(req.body.code, 10);
   const c = codes.get(email);
   if (!c || c.expires < Date.now()) return fail(res, 400, "code_expired", "The code has expired. Ask for a new one.");
   if (++c.tries > 5) { codes.delete(email); return fail(res, 400, "too_many_tries", "Too many wrong codes. Ask for a new one."); }
@@ -121,17 +144,16 @@ app.post("/api/review", limiter(10, 40), async (req, res) => {
 });
 
 app.post("/api/submit", limiter(60, 10), async (req, res) => {
-  const p = req.body.profile || {};
-  // Department is not asked: it comes from the HR/org file by employee ID at
-  // assessment time. The column stays in the workbook (empty) so its layout is unchanged.
-  const profile = { name: str(p.name, 100), empId: str(p.empId, 40), email: str(p.email, 200).toLowerCase(), dept: "", teamRole: str(p.teamRole, 80) };
-  if (!profile.name) return fail(res, 400, "bad_profile", "Name is required.");
-  if (!/^[A-Za-z0-9._-]{2,40}$/.test(profile.empId)) return fail(res, 400, "bad_profile", "Enter a valid employee ID (letters, digits, dot, dash, or underscore).");
-  if (!EMAIL_RE.test(profile.email)) return fail(res, 400, "bad_profile", "Enter a valid email address.");
-  if (!domainOk(profile.email)) return fail(res, 400, "bad_profile", "Use your work email address.");
+  // Name, Employee ID, email and role come from the employee list, never from
+  // the browser. Department comes from the HR/org file at assessment time (the
+  // column stays in the workbook, empty, so its layout is unchanged).
+  if (!people.loaded()) return fail(res, 503, "list_not_loaded", "The employee list is being loaded. Keep this page open and try Submit again in a few minutes.");
+  const known = personFrom(req.body.profile);
+  if (!known) return fail(res, 400, "not_listed", notListed());
+  const pr = people.profileOf(known);
+  const profile = { name: pr.name, empId: pr.empId, email: pr.email, dept: "", teamRole: pr.teamRole };
   if (config.requireEmailCode && !verifyTokenOk(profile.email, req.body.verifyToken)) return fail(res, 401, "verify_required", "Confirm your email with the code we sent you.");
   const role = bank.roleMap.find(r => r.teamRole === profile.teamRole);
-  if (!role) return fail(res, 400, "bad_profile", "Choose a team role from the list.");
   const qset = role.questionnaire, qs = Scoring.questionsFor(bank, qset);
 
   const answers = {};
@@ -272,6 +294,12 @@ function jobAuth(req, res, next) {
   if (!config.resultsToken || !safeEq(t, config.resultsToken)) return fail(res, 401, "unauthorized", "Not allowed.");
   next();
 }
+// Backup job: the employee list (scripts/sync-people.js).
+app.get("/api/people/status", jobAuth, (req, res) => res.json(people.status()));
+app.post("/api/people/upload", jobAuth, express.json({ limit: "1mb" }), (req, res) => {
+  try { const r = people.load(req.body.people); console.log(`employee list updated: ${r.count} people`); res.json({ ok: true, ...r }); }
+  catch (e) { fail(res, 400, "bad_request", e.message); }
+});
 app.get("/api/results/ready", jobAuth, (req, res) => res.json({ ready: results.readyIds() }));
 app.post("/api/results/upload", jobAuth, async (req, res) => {
   const id = str(req.body.submissionId, 20), html = typeof req.body.html === "string" ? req.body.html : "";
@@ -331,6 +359,7 @@ app.post("/api/email-results", limiter(60, 5), async (req, res) => {
 
 /* ---------- admin and reviewer ---------- */
 app.get("/auth/signin", auth.signIn);
+app.post("/auth/signin", limiter(15, 10), express.urlencoded({ extended: false, limit: "2kb" }), auth.signInWithPasscode);
 app.get("/auth/redirect", auth.redirect);
 app.post("/auth/signout", auth.signOut);
 
@@ -365,7 +394,10 @@ app.post("/admin/api/review", auth.requireReviewer, sameOrigin, async (req, res)
   }
 });
 
-app.post("/admin/api/status", auth.requireReviewer, auth.requireAdmin, sameOrigin, async (req, res) => {
+app.post("/admin/api/status", auth.requireReviewer, auth.requireAdmin, sameOrigin, (req, res) => changeStatus(req, res, null));
+// The surveyor's helper jobs change a status with RESULTS_TOKEN (no passcode stored on any machine).
+app.post("/api/results/status", jobAuth, (req, res) => changeStatus(req, res, config.surveyOwner + " (job)"));
+async function changeStatus(req, res, jobBy) {
   // Submitted: counts. Inactive: no longer counts (rows marked "Deleted" earlier mean the same). Test: a trial entry. Reopened: the surveyor approved a
   // new check-in for this person. Only "Submitted" blocks a new check-in, and only it is assessed.
   const status = str(req.body.status, 20), id = str(req.body.submissionId, 20);
@@ -379,7 +411,7 @@ app.post("/admin/api/status", auth.requireReviewer, auth.requireAdmin, sameOrigi
     }
     // The approval is recorded in the results Excel itself (Responses sheet), next to Status.
     const u = req.session.user || {};
-    const by = config.mock && process.env.SURVEY_OWNER ? config.surveyOwner : (u.name || u.email || "admin");
+    const by = jobBy || (config.mock && process.env.SURVEY_OWNER ? config.surveyOwner : (u.name || u.email || "admin"));
     await store.setStatus(id, status, {
       "New check-in approved": status === "Reopened" ? "Yes" : "",
       "Status changed by": by, "Status changed on (UTC)": new Date().toISOString().slice(0, 16).replace("T", " ")
@@ -387,9 +419,12 @@ app.post("/admin/api/status", auth.requireReviewer, auth.requireAdmin, sameOrigi
     res.json({ ok: true });
   }
   catch (e) { console.error("status failed:", e.message); fail(res, 502, "save_failed", "The change could not be saved."); }
-});
+}
 
-app.get("/admin/api/download", auth.requireReviewer, async (req, res) => {
+// The backup job downloads the workbook with RESULTS_TOKEN instead of signing in.
+app.get("/api/results/download", jobAuth, (req, res) => downloadWorkbook(req, res));
+app.get("/admin/api/download", auth.requireReviewer, (req, res) => downloadWorkbook(req, res));
+async function downloadWorkbook(req, res) {
   if (config.mock && !config.localExcelPath) return res.status(501).send("Download needs the real Excel file; it is not available with DEV_MOCK.");
   try {
     const r = await store.download();
@@ -403,7 +438,7 @@ app.get("/admin/api/download", auth.requireReviewer, async (req, res) => {
     console.error("download failed:", e.message);
     res.status(502).send("The Excel file could not be downloaded right now.");
   }
-});
+}
 
 app.get("/admin/api/file-link", auth.requireReviewer, async (req, res) => {
   try { res.json({ webUrl: await store.webUrl() }); }

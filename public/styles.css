@@ -44,6 +44,7 @@ main.narrow{max-width:640px;padding-top:48px}
 .chip[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:700}
 label.f{display:block;font-weight:700;margin:0 0 4px}
 input,textarea,select{font:inherit;width:100%;padding:10px 12px;border:1px solid var(--rule);border-radius:8px;background:var(--bg);color:var(--ink)}
+input:disabled{background:var(--soft);color:var(--muted);border-style:dashed;cursor:not-allowed;opacity:1;-webkit-text-fill-color:var(--muted)}
 textarea{min-height:110px;resize:vertical}
 .grid2f{display:grid;grid-template-columns:1fr 1fr;gap:10px 14px}
 @media (max-width:620px){.grid2f{grid-template-columns:1fr}}

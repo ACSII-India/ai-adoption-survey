@@ -21,7 +21,7 @@
 
   function signInPage() {
     $("main").className = "narrow";
-    $("main").innerHTML = '<h1>Sign in to view responses</h1><p>Admins and reviewers sign in with their Microsoft work account. Participants do not need to sign in; they use the <a href="/">check-in page</a>.</p><p><a class="btn" href="/auth/signin">Sign in with Microsoft</a></p>';
+    $("main").innerHTML = '<h1>Surveyor sign-in</h1><p>This page is only for the surveyor. Participants do not need to sign in; they use the <a href="/">check-in page</a>.</p><p><a class="btn" href="/auth/signin">Sign in</a></p>';
   }
 
   const visible = () => data.responses.filter(r => showAll || r.Status === "Submitted");
