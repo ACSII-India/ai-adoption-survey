@@ -100,26 +100,27 @@
       const owner = esc(cfg.surveyOwner || "the survey owner") + (cfg.surveyOwnerContact ? ` (${esc(cfg.surveyOwnerContact)})` : "");
       let found = null, probation = false;
       const ask = () => {
-        const needCode = !!cfg.requireCode;
-        el.innerHTML = `<div class="panel"><p style="margin:0 0 10px">${probation ? "Enter your work email" : "Enter your Employee ID"}${needCode ? " and the check-in code from your email" : ""}.</p>
+        // codeBox: some or all people have codes; needCode: everyone has one, so it is required.
+        const codeBox = !!cfg.codeBox, needCode = !!cfg.requireCode;
+        el.innerHTML = `<div class="panel"><p style="margin:0 0 10px">${probation ? "Enter your work email" : "Enter your Employee ID"}${needCode ? " and the check-in code from your email" : codeBox ? ", and your check-in code if you received one by email" : ""}.</p>
           <div class="grid2f"><div>${probation
             ? '<label class="f" for="lk">Work email</label><input id="lk" type="email" autocomplete="email" maxlength="200">'
             : '<label class="f" for="lk">Employee ID</label><input id="lk" autocomplete="off" spellcheck="false" maxlength="40" placeholder="For example ACSIT-000, or just 000">'}</div>
-            ${needCode ? '<div><label class="f" for="cc">Check-in code</label><input id="cc" autocomplete="off" spellcheck="false" maxlength="20" placeholder="For example ABC-DEF" style="text-transform:uppercase"></div>' : ""}</div>
+            ${codeBox ? '<div><label class="f" for="cc">Check-in code' + (needCode ? "" : " (if you received one)") + '</label><input id="cc" autocomplete="off" spellcheck="false" maxlength="20" placeholder="For example ABC-DEF" style="text-transform:uppercase"></div>' : ""}</div>
           <p class="err" id="perr" role="alert"></p>
           <div class="row"><button class="btn" id="find" type="button">Find me</button>
           <button class="btn ghost" id="alt" type="button">${probation ? "I have an Employee ID" : "I don't have an Employee ID yet"}</button></div></div>`;
         const go = async () => {
-          const v = $("lk").value.trim(), code = needCode ? $("cc").value.trim() : "";
+          const v = $("lk").value.trim(), code = codeBox ? $("cc").value.trim() : "";
           if (!v) { $("perr").textContent = probation ? "Enter your work email." : "Enter your Employee ID."; $("lk").focus(); return; }
           if (needCode && !code) { $("perr").textContent = "Enter your check-in code."; $("cc").focus(); return; }
           $("find").disabled = true; $("perr").textContent = "";
-          try { found = await api("/api/people/lookup", Object.assign(probation ? { email: v.toLowerCase() } : { empId: v }, needCode ? { code } : {})); found.lookupEmail = probation ? v.toLowerCase() : ""; show(); }
+          try { found = await api("/api/people/lookup", Object.assign(probation ? { email: v.toLowerCase() } : { empId: v }, code ? { code } : {})); found.lookupEmail = probation ? v.toLowerCase() : ""; show(); }
           catch (e) { $("perr").textContent = e.message; $("find").disabled = false; $("lk").focus(); }
         };
         $("find").onclick = go;
-        $("lk").onkeydown = e => { if (e.key === "Enter") { e.preventDefault(); needCode ? $("cc").focus() : go(); } };
-        if (needCode) $("cc").onkeydown = e => { if (e.key === "Enter") { e.preventDefault(); go(); } };
+        $("lk").onkeydown = e => { if (e.key === "Enter") { e.preventDefault(); codeBox ? $("cc").focus() : go(); } };
+        if (codeBox) $("cc").onkeydown = e => { if (e.key === "Enter") { e.preventDefault(); go(); } };
         $("alt").onclick = () => { probation = !probation; ask(); };
         $("lk").focus();
       };

@@ -48,7 +48,12 @@ async function readSheet() {
   const codesOn = process.env.CODES_ON === "1" || fs.existsSync(path.join(ROOT, "backup", "checkin-codes.ON"));   // CODES_ON=1: local tests only
   if (codesOn) try { codes = JSON.parse(fs.readFileSync(process.env.CODES_FILE || path.join(ROOT, "backup", "checkin-codes.json"), "utf8")); } catch (_) {}
   const norm = c => String(c || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
+  // backup/checkin-codes.ON lists Employee IDs or emails to switch on only those people (a test);
+  // "all" (or an empty file) switches everyone on.
+  let only = process.env.CODES_ONLY ? new Set(process.env.CODES_ONLY.split(/[,\s]+/).filter(Boolean).map(x => x.toLowerCase())) : null;   // CODES_ONLY: local tests only
+  if (!only) try { const w = fs.readFileSync(path.join(ROOT, "backup", "checkin-codes.ON"), "utf8").split(/\s+/).filter(x => x && !/^\d{4}-\d\d-\d\dT/.test(x)); if (w.length && !w.includes("all")) only = new Set(w.map(x => x.toLowerCase())); } catch (_) {}
   for (const p of rows) {
+    if (only && !only.has(String(p.email).toLowerCase()) && !only.has(String(p.empId).toLowerCase())) continue;
     const c = codes[String(p.email).toLowerCase()];
     if (c && c.code && c.salt) { p.codeSalt = c.salt; p.codeHash = crypto.createHash("sha256").update(`${c.salt}:${norm(c.code)}`).digest("hex"); }
   }

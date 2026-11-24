@@ -7,6 +7,8 @@
 //                                                 the old one stops working at the next sync (within 10 minutes)
 //   node scripts/checkin-codes.js --on | --off    start or stop asking for codes on the survey (after the codes
 //                                                 are sent); takes effect at the next sync
+//   node scripts/checkin-codes.js --on ACSIT-014  codes for the named people only (a test); everyone else
+//                                                 continues without a code
 //
 // Codes live only in backup/checkin-codes.json (not in git, readable only by
 // you). The survey receives a salted fingerprint of each code through
@@ -114,7 +116,15 @@ async function buildFiles(list, codes) {
 
 (async () => {
   const flag = path.join(ROOT, "backup", "checkin-codes.ON");
-  if (process.argv.includes("--on")) { fs.writeFileSync(flag, new Date().toISOString() + "\n", { mode: 0o600 }); console.log("Check-in codes switched ON: the survey asks for them after the next sync (run scripts/backup-from-render.sh to do it now)."); return; }
+  if (process.argv.includes("--on")) {
+    // --on            everyone
+    // --on ACSIT-014  only the people named (Employee IDs or emails), for a test
+    const who = process.argv.slice(process.argv.indexOf("--on") + 1).filter(x => !x.startsWith("--"))
+      .map(v => { const m = /^(?:ACSIT[-\s]?)?(\d{1,4})$/i.exec(v.trim()); return m ? "ACSIT-" + m[1].padStart(3, "0") : v.trim(); });
+    fs.writeFileSync(flag, (who.length ? who.join("\n") : "all") + "\n", { mode: 0o600 });
+    console.log(`Check-in codes switched ON for ${who.length ? who.join(", ") + " only" : "everyone"}: the survey asks for them after the next sync (run scripts/backup-from-render.sh to do it now).`);
+    return;
+  }
   if (process.argv.includes("--off")) { try { fs.unlinkSync(flag); } catch (_) {} console.log("Check-in codes switched OFF: the survey stops asking for them after the next sync."); return; }
   const list = await people();
   const codes = readCodes();

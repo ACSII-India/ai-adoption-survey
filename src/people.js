@@ -86,7 +86,10 @@ const hasId = email => { const p = byEmail.get(String(email || "").trim().toLowe
 // Codes are typed without the dash and in any case: "k7q4mx" = "K7Q-4MX".
 const normCode = c => String(c || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
 const codeFingerprint = (salt, code) => crypto.createHash("sha256").update(`${salt}:${normCode(code)}`).digest("hex");
-const requiresCode = () => list.some(p => p.codeHash);
+// "off": nobody has a code; "some": only people with a code need it (a test, or a
+// gradual start); "all": everyone needs one.
+const codeMode = () => { const n = list.filter(p => p.codeHash).length; return !n ? "off" : n === list.length ? "all" : "some"; };
+const requiresCode = () => codeMode() !== "off";
 function codeOk(p, code) {
   if (!p.codeHash) return false;
   const a = Buffer.from(codeFingerprint(p.codeSalt, code)), b = Buffer.from(p.codeHash);
@@ -96,4 +99,4 @@ function codeOk(p, code) {
 // What the server records for this person (never what the browser sent).
 const profileOf = p => ({ name: p.name, empId: p.empId || probationId(p.email), email: p.email, teamRole: p.teamRole, qset: p.qset, probation: !p.empId });
 
-module.exports = { load: save, loaded: () => list.length > 0, status: () => ({ count: list.length, hash, withCode: list.filter(p => p.codeHash).length, deleted: deleted.size }), isDeleted: id => deleted.has(id), setDeleted, addDeleted, findById, findProbation, hasId, profileOf, mask, requiresCode, codeOk, codeFingerprint, normCode };
+module.exports = { load: save, loaded: () => list.length > 0, status: () => ({ count: list.length, hash, withCode: list.filter(p => p.codeHash).length, deleted: deleted.size }), isDeleted: id => deleted.has(id), setDeleted, addDeleted, findById, findProbation, hasId, profileOf, mask, requiresCode, codeMode, codeOk, codeFingerprint, normCode };

@@ -69,7 +69,7 @@ app.get("/api/config", (req, res) => {
   res.json({
     bank, cycle: config.cycleName, requireEmailCode: config.requireEmailCode,
     allowedEmailDomains: config.allowedEmailDomains, resultsEmailEnabled: config.resultsEmailEnabled,
-    allowResubmit: config.allowResubmit, requireCode: people.requiresCode(), surveyOwner: config.surveyOwner, surveyOwnerContact: config.surveyOwnerContact, threshold: config.levelThreshold, metScore: config.metScore
+    allowResubmit: config.allowResubmit, requireCode: people.codeMode() === "all", codeBox: people.codeMode() !== "off", surveyOwner: config.surveyOwner, surveyOwnerContact: config.surveyOwnerContact, threshold: config.levelThreshold, metScore: config.metScore
   });
 });
 
@@ -92,17 +92,20 @@ const keyOf = p => (p.empId ? "id:" + p.empId.toUpperCase() : "email:" + p.email
 app.post("/api/people/lookup", limiter(10, 30), (req, res) => {
   if (!people.loaded()) return fail(res, 503, "list_not_loaded", "The employee list is being loaded. Please try again in a few minutes.");
   const empId = str(req.body.empId, 40), email = str(req.body.email, 200).toLowerCase(), code = str(req.body.code, 20);
-  const needCode = people.requiresCode();
+  const mode = people.codeMode();
   let p = null;
   if (empId) p = people.findById(empId);
   else if (email) {
     if (people.hasId(email)) return fail(res, 400, "use_id", "You have an Employee ID: please enter that instead.");
     p = people.findProbation(email);
   }
+  // A code is needed for anyone who has one; with codes on for everyone, an unknown ID also
+  // gets the "do not match" answer, so guessing does not reveal who exists.
+  const needCode = p ? !!p.codeHash : mode === "all";
   if (!needCode) {
     if (!p) return fail(res, 404, "not_listed", notListed());
   } else {
-    if (!people.normCode(code)) return fail(res, 400, "code_required", "Enter your check-in code as well.");
+    if (!people.normCode(code)) return fail(res, 400, "code_required", "Enter your check-in code as well: it is in the email you received.");
     const key = p ? keyOf(p) : (empId ? "id?:" + empId.toUpperCase() : "email?:" + email);
     const t = tries.get(key) || { fails: 0, lockedUntil: 0 };
     if (t.lockedUntil > Date.now()) return fail(res, 429, "locked", `Too many wrong codes. Try again in ${LOCK_MIN} minutes, or ${ownerNote()}.`);
@@ -126,7 +129,7 @@ const personFrom = p => {
   if (!p) return null;
   const known = p.probation ? people.findProbation(str(p.lookupEmail, 200)) : people.findById(str(p.empId, 40));
   if (!known) return null;
-  if (people.requiresCode() && !personTokenOk(keyOf(known), p.token)) return null;
+  if (known.codeHash && !personTokenOk(keyOf(known), p.token)) return null;
   return known;
 };
 
