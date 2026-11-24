@@ -2,7 +2,7 @@
 (function () {
   const $ = id => document.getElementById(id);
   const esc = s => String(s == null ? "" : s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
-  let me = null, data = { responses: [], evidence: [] }, tab = "people", sel = null, showAll = false;
+  let me = null, data = { responses: [], evidence: [] }, codeFails = [], tab = "people", sel = null, showAll = false;
 
   async function post(path, body) {
     const r = await fetch(path, { method: "POST", headers: { "Content-Type": "application/json", "X-Requested-With": "fetch" }, body: JSON.stringify(body) });
@@ -16,7 +16,10 @@
     if (r.status === 401) return signInPage();
     const j = await r.json();
     if (!r.ok) { $("main").innerHTML = `<p class="err">${esc(j.message)}</p>`; return; }
-    data = j; render();
+    data = j;
+    codeFails = [];
+    if (me && me.role === "admin") { try { const c = await fetch("/admin/api/code-failures"); if (c.ok) codeFails = (await c.json()).failures || []; } catch (e) {} }
+    render();
   }
 
   function signInPage() {
@@ -39,6 +42,15 @@
     if (asks.length && me.role === "admin") h += `<div class="panel" style="margin:12px 0 0;border-left:4px solid #b45309"><h3 style="margin-top:0">New check-in requests waiting for approval (${asks.length})</h3>
       <p class="hint" style="margin-top:0">These people tried to submit again. Open each one and choose Approve a new check-in, or Mark as test entry if the earlier one was a trial.</p>
       <div class="tw"><table><tbody>${asks.map(r => `<tr class="click" tabindex="0" data-id="${esc(r["Submission ID"])}"><td>${esc(r.Name)}</td><td>${esc(r["Respondent ID (Employee ID)"])}</td><td>first check-in ${esc(String(r["Submitted at (UTC)"]).slice(0, 10))}</td><td>asked ${esc(r["New check-in requested (UTC)"])} UTC</td></tr>`).join("")}</tbody></table></div></div>`;
+    if (codeFails.length) {
+      // Wrong check-in codes, grouped by the Employee ID (or email) that was tried.
+      const by = new Map();
+      for (const f of codeFails) { const g = by.get(f.key) || { key: f.key, name: f.name, known: f.known, n: 0, last: f.at, locked: false }; g.n++; if (f.at > g.last) g.last = f.at; g.locked = g.locked || f.locked; by.set(f.key, g); }
+      const groups = [...by.values()].sort((a, b) => b.n - a.n);
+      h += `<div class="panel" style="margin:12px 0 0;border-left:4px solid #b45309"><h3 style="margin-top:0">Wrong check-in codes (${codeFails.length} since the last restart)</h3>
+        <p class="hint" style="margin-top:0">Several wrong codes for someone else's Employee ID can mean a colleague is trying to check in as them. After 5 wrong codes the ID is locked for 15 minutes.</p>
+        <div class="tw"><table><thead><tr><th>Tried</th><th>Person</th><th class="n">Wrong codes</th><th>Last try (UTC)</th><th>Locked</th></tr></thead><tbody>${groups.map(g => `<tr><td>${esc(g.key)}</td><td>${g.known ? esc(g.name) : '<span class="hint">not on the list</span>'}</td><td class="n">${g.n}</td><td>${esc(String(g.last).slice(0, 16).replace("T", " "))}</td><td>${g.locked ? "Yes" : ""}</td></tr>`).join("")}</tbody></table></div></div>`;
+    }
     if (!rows.length) h += '<p>No responses yet.</p>';
     else if (tab === "sheet") {
       const cols = Object.keys(rows[0]);

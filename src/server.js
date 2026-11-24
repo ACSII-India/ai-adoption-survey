@@ -69,29 +69,66 @@ app.get("/api/config", (req, res) => {
   res.json({
     bank, cycle: config.cycleName, requireEmailCode: config.requireEmailCode,
     allowedEmailDomains: config.allowedEmailDomains, resultsEmailEnabled: config.resultsEmailEnabled,
-    allowResubmit: config.allowResubmit, surveyOwner: config.surveyOwner, surveyOwnerContact: config.surveyOwnerContact, threshold: config.levelThreshold, metScore: config.metScore
+    allowResubmit: config.allowResubmit, requireCode: people.requiresCode(), surveyOwner: config.surveyOwner, surveyOwnerContact: config.surveyOwnerContact, threshold: config.levelThreshold, metScore: config.metScore
   });
 });
 
 // First screen: find the person in the employee list (standard master sheet).
-// Exact Employee ID only; people on probation (no ID yet) use their work email.
-// The email is shown partly hidden, and lookups are rate-limited.
-const notListed = () => `This isn't on the employee list. Please message ${config.surveyOwner} on Microsoft Teams${config.surveyOwnerContact ? ` (${config.surveyOwnerContact})` : ""}.`;
+// Exact Employee ID (or, on probation without one, work email) plus the
+// person's check-in code once codes are issued. A wrong ID and a wrong code
+// get the same answer, so guessing does not reveal who exists. After 5 wrong
+// codes an ID is locked for 15 minutes; the surveyor sees the attempts on /admin.
+const ownerNote = () => `message ${config.surveyOwner} on Microsoft Teams${config.surveyOwnerContact ? ` (${config.surveyOwnerContact})` : ""}`;
+const notListed = () => `This isn't on the employee list. Please ${ownerNote()}.`;
+const badCode = () => `That Employee ID and check-in code do not match. Check the code in the message you received, or ${ownerNote()} for a new one.`;
+const tries = new Map();                 // lookup key -> { fails, lockedUntil, last }
+const codeFailures = [];                 // for the surveyor: { key, at, locked }
+const LOCK_AFTER = 5, LOCK_MIN = 15;
+// Proof that this browser passed the lookup, sent back with the check-in (valid 14 days).
+const personToken = key => { const exp = Date.now() + 14 * 24 * 3600 * 1000; return `${exp}.${hmac(`person|${key}|${exp}`)}`; };
+const personTokenOk = (key, t) => { const [exp, sig] = String(t || "").split("."); return Number(exp) > Date.now() && safeEq(sig || "", hmac(`person|${key}|${exp}`)); };
+const keyOf = p => (p.empId ? "id:" + p.empId.toUpperCase() : "email:" + p.email);
+
 app.post("/api/people/lookup", limiter(10, 30), (req, res) => {
   if (!people.loaded()) return fail(res, 503, "list_not_loaded", "The employee list is being loaded. Please try again in a few minutes.");
-  const empId = str(req.body.empId, 40), email = str(req.body.email, 200).toLowerCase();
+  const empId = str(req.body.empId, 40), email = str(req.body.email, 200).toLowerCase(), code = str(req.body.code, 20);
+  const needCode = people.requiresCode();
   let p = null;
   if (empId) p = people.findById(empId);
   else if (email) {
     if (people.hasId(email)) return fail(res, 400, "use_id", "You have an Employee ID: please enter that instead.");
     p = people.findProbation(email);
   }
-  if (!p) return fail(res, 404, "not_listed", notListed());
+  if (!needCode) {
+    if (!p) return fail(res, 404, "not_listed", notListed());
+  } else {
+    if (!people.normCode(code)) return fail(res, 400, "code_required", "Enter your check-in code as well.");
+    const key = p ? keyOf(p) : (empId ? "id?:" + empId.toUpperCase() : "email?:" + email);
+    const t = tries.get(key) || { fails: 0, lockedUntil: 0 };
+    if (t.lockedUntil > Date.now()) return fail(res, 429, "locked", `Too many wrong codes. Try again in ${LOCK_MIN} minutes, or ${ownerNote()}.`);
+    if (!p || !people.codeOk(p, code)) {
+      t.fails++; t.last = new Date().toISOString();
+      if (t.fails >= LOCK_AFTER) { t.lockedUntil = Date.now() + LOCK_MIN * 60 * 1000; t.fails = 0; }
+      tries.set(key, t);
+      codeFailures.push({ key: key.replace(/^\w+\??:/, ""), known: !!p, name: p ? p.name : "", at: t.last, locked: t.lockedUntil > Date.now() });
+      if (codeFailures.length > 500) codeFailures.shift();
+      console.log(`wrong check-in code for ${key}${t.lockedUntil > Date.now() ? " (locked)" : ""}`);
+      return fail(res, 401, "no_match", badCode());
+    }
+    tries.delete(key);
+  }
   const pr = people.profileOf(p);
-  res.json({ name: pr.name, empId: p.empId, emailShown: people.mask(pr.email), teamRole: pr.teamRole, qset: pr.qset, questionnaire: bank.questionnaires[pr.qset].name, probation: pr.probation });
+  res.json({ name: pr.name, empId: p.empId, emailShown: people.mask(pr.email), teamRole: pr.teamRole, qset: pr.qset, questionnaire: bank.questionnaires[pr.qset].name, probation: pr.probation, token: personToken(keyOf(p)) });
 });
-// The person as the server knows them, from what the browser sent.
-const personFrom = p => p && (p.probation ? people.findProbation(str(p.lookupEmail, 200)) : people.findById(str(p.empId, 40)));
+// The person as the server knows them, from what the browser sent. With codes
+// issued, the browser must also hold the token from a successful lookup.
+const personFrom = p => {
+  if (!p) return null;
+  const known = p.probation ? people.findProbation(str(p.lookupEmail, 200)) : people.findById(str(p.empId, 40));
+  if (!known) return null;
+  if (people.requiresCode() && !personTokenOk(keyOf(known), p.token)) return null;
+  return known;
+};
 
 // Optional one-time code sent to the participant's work email.
 const codes = new Map(); // email -> { hash, expires, tries }
@@ -149,7 +186,7 @@ app.post("/api/submit", limiter(60, 10), async (req, res) => {
   // column stays in the workbook, empty, so its layout is unchanged).
   if (!people.loaded()) return fail(res, 503, "list_not_loaded", "The employee list is being loaded. Keep this page open and try Submit again in a few minutes.");
   const known = personFrom(req.body.profile);
-  if (!known) return fail(res, 400, "not_listed", notListed());
+  if (!known) return fail(res, 401, "sign_in_again", "Please confirm your Employee ID and check-in code again: your answers stay on this page.");
   const pr = people.profileOf(known);
   const profile = { name: pr.name, empId: pr.empId, email: pr.email, dept: "", teamRole: pr.teamRole };
   if (config.requireEmailCode && !verifyTokenOk(profile.email, req.body.verifyToken)) return fail(res, 401, "verify_required", "Confirm your email with the code we sent you.");
@@ -388,6 +425,9 @@ app.get("/admin/api/me", auth.requireReviewer, (req, res) => {
   const u = req.session.user;
   res.json({ name: u.name, email: u.email, role: u.isAdmin ? "admin" : "reviewer", cycle: config.cycleName, mock: config.mock });
 });
+
+// Wrong check-in codes (newest first), for the surveyor.
+app.get("/admin/api/code-failures", auth.requireReviewer, auth.requireAdmin, (req, res) => res.json({ failures: codeFailures.slice().reverse() }));
 
 app.get("/admin/api/data", auth.requireReviewer, async (req, res) => {
   try {

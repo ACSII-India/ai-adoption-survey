@@ -22,7 +22,7 @@
   function nextStep() {
     const p = st.profile;
     if (st.submitted) return { t: "done" };
-    if (!p.found || !st.qset) return { t: "profile" };
+    if (!p.found || !st.qset || (cfg.requireCode && !p.token)) return { t: "profile" };
     if (cfg.requireEmailCode && !st.verifyToken) return { t: "verify" };
     for (const q of qs()) {
       const a = st.answers[q.id];
@@ -100,22 +100,26 @@
       const owner = esc(cfg.surveyOwner || "the survey owner") + (cfg.surveyOwnerContact ? ` (${esc(cfg.surveyOwnerContact)})` : "");
       let found = null, probation = false;
       const ask = () => {
-        el.innerHTML = `<div class="panel"><p style="margin:0 0 10px">${probation ? "Enter your work email." : "Enter your Employee ID."}</p>
+        const needCode = !!cfg.requireCode;
+        el.innerHTML = `<div class="panel"><p style="margin:0 0 10px">${probation ? "Enter your work email" : "Enter your Employee ID"}${needCode ? " and the check-in code from your email" : ""}.</p>
           <div class="grid2f"><div>${probation
             ? '<label class="f" for="lk">Work email</label><input id="lk" type="email" autocomplete="email" maxlength="200">'
-            : '<label class="f" for="lk">Employee ID</label><input id="lk" autocomplete="off" spellcheck="false" maxlength="40" placeholder="For example ACSIT-000, or just 000">'}</div></div>
+            : '<label class="f" for="lk">Employee ID</label><input id="lk" autocomplete="off" spellcheck="false" maxlength="40" placeholder="For example ACSIT-000, or just 000">'}</div>
+            ${needCode ? '<div><label class="f" for="cc">Check-in code</label><input id="cc" autocomplete="off" spellcheck="false" maxlength="20" placeholder="For example ABC-DEF" style="text-transform:uppercase"></div>' : ""}</div>
           <p class="err" id="perr" role="alert"></p>
           <div class="row"><button class="btn" id="find" type="button">Find me</button>
           <button class="btn ghost" id="alt" type="button">${probation ? "I have an Employee ID" : "I don't have an Employee ID yet"}</button></div></div>`;
         const go = async () => {
-          const v = $("lk").value.trim();
+          const v = $("lk").value.trim(), code = needCode ? $("cc").value.trim() : "";
           if (!v) { $("perr").textContent = probation ? "Enter your work email." : "Enter your Employee ID."; $("lk").focus(); return; }
+          if (needCode && !code) { $("perr").textContent = "Enter your check-in code."; $("cc").focus(); return; }
           $("find").disabled = true; $("perr").textContent = "";
-          try { found = await api("/api/people/lookup", probation ? { email: v.toLowerCase() } : { empId: v }); found.lookupEmail = probation ? v.toLowerCase() : ""; show(); }
+          try { found = await api("/api/people/lookup", Object.assign(probation ? { email: v.toLowerCase() } : { empId: v }, needCode ? { code } : {})); found.lookupEmail = probation ? v.toLowerCase() : ""; show(); }
           catch (e) { $("perr").textContent = e.message; $("find").disabled = false; $("lk").focus(); }
         };
         $("find").onclick = go;
-        $("lk").onkeydown = e => { if (e.key === "Enter") { e.preventDefault(); go(); } };
+        $("lk").onkeydown = e => { if (e.key === "Enter") { e.preventDefault(); needCode ? $("cc").focus() : go(); } };
+        if (needCode) $("cc").onkeydown = e => { if (e.key === "Enter") { e.preventDefault(); go(); } };
         $("alt").onclick = () => { probation = !probation; ask(); };
         $("lk").focus();
       };
@@ -133,7 +137,7 @@
           // Answers already given stay only if the questionnaire is the same.
           if (st.qset !== f.qset) { st.answers = {}; st.evidence = {}; }
           if (f.lookupEmail !== st.profile.lookupEmail || f.empId !== st.profile.empId) st.verifyToken = "";
-          st.profile = { found: true, name: f.name, empId: f.empId, email: f.emailShown, teamRole: f.teamRole, qset: f.qset, probation: !!f.probation, lookupEmail: f.lookupEmail };
+          st.profile = { found: true, name: f.name, empId: f.empId, email: f.emailShown, teamRole: f.teamRole, qset: f.qset, probation: !!f.probation, lookupEmail: f.lookupEmail, token: f.token || "" };
           st.qset = f.qset; save(); render();
         };
         $("go").focus();
@@ -355,7 +359,12 @@
       try {
         const r = await api("/api/submit", { profile: st.profile, answers: st.answers, evidence, verifyToken: st.verifyToken });
         st.submitted = r; save(); render();
-      } catch (e) { $("serr").textContent = e.message; $("submit").disabled = false; if (e.code === "verify_required") { st.verifyToken = ""; save(); render(); } }
+      } catch (e) {
+        $("serr").textContent = e.message; $("submit").disabled = false;
+        if (e.code === "verify_required") { st.verifyToken = ""; save(); render(); }
+        // The sign-in expired or was never confirmed with a code: confirm again; the answers stay.
+        if (e.code === "sign_in_again") { st.profile.found = false; st.profile.token = ""; save(); render(); }
+      }
     };
   }
 

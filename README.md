@@ -47,6 +47,8 @@ The person enters their Employee ID (people on probation without one use their w
 
 ### One check-in per person per cycle, with surveyor approval
 
+**Check-in codes** (so only the person can take the check-in as themselves): `node scripts/checkin-codes.js` gives each person on the standard sheet a random code (kept only in `backup/checkin-codes.json`) and builds the send files in `backup/check-in codes/` (Word + Excel mail merge, and individual messages for Teams). After the codes are sent, `node scripts/checkin-codes.js --on` makes the survey ask for them (the backup job sends a salted fingerprint of each code, never the code); `--off` stops it. A lost code: `node scripts/checkin-codes.js --new <Employee ID or email>`. After 5 wrong codes an ID is locked for 15 minutes; wrong tries are listed on `/admin`.
+
 To permanently delete check-ins that are already Inactive or Test (for example old test entries), run `node scripts/purge-submissions.js S-XXXXXXXX ...`: it deletes them on the survey (all tabs and the report), lists them in `backup/deleted-submissions.txt` so the backup job never restores them, and removes the automatic job's saved reports for them. Older timestamped backup copies are not changed.
 
 A second check-in from the same Employee ID in the same cycle is blocked. The attempt itself is the request: the survey stamps `New check-in requested (UTC)` on the earlier check-in and tells the person their request has gone to the surveyor (`SURVEY_OWNER`); their answers stay on the page. The surveyor sees **New check-in requests waiting for approval** at the top of `/admin` (and the same column in the Excel file), opens the earlier check-in and chooses:

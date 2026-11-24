@@ -41,6 +41,17 @@ async function readSheet() {
 
 (async () => {
   const rows = await readSheet();
+  // Personal check-in codes (scripts/checkin-codes.js): only a salted fingerprint is sent,
+  // and only once codes are switched on (node scripts/checkin-codes.js --on), so the survey
+  // asks for them only after people have received them.
+  let codes = {};
+  const codesOn = process.env.CODES_ON === "1" || fs.existsSync(path.join(ROOT, "backup", "checkin-codes.ON"));   // CODES_ON=1: local tests only
+  if (codesOn) try { codes = JSON.parse(fs.readFileSync(process.env.CODES_FILE || path.join(ROOT, "backup", "checkin-codes.json"), "utf8")); } catch (_) {}
+  const norm = c => String(c || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
+  for (const p of rows) {
+    const c = codes[String(p.email).toLowerCase()];
+    if (c && c.code && c.salt) { p.codeSalt = c.salt; p.codeHash = crypto.createHash("sha256").update(`${c.salt}:${norm(c.code)}`).digest("hex"); }
+  }
   if (process.argv.includes("--check")) {
     const bank = require(path.join(ROOT, "data", "questions.json"));
     const qs = {};
@@ -50,7 +61,7 @@ async function readSheet() {
       qs[k] = (qs[k] || 0) + 1;
       if (!m) console.log(`  no questionnaire for role "${p.role}": ${p.name}`);
     }
-    console.log(`${rows.length} people, ${rows.filter(p => !p.empId).length} without an Employee ID`);
+    console.log(`${rows.length} people, ${rows.filter(p => !p.empId).length} without an Employee ID, ${rows.filter(p => p.codeHash).length} with a check-in code`);
     for (const [k, n] of Object.entries(qs)) console.log(`  ${k}: ${n}`);
     return;
   }
@@ -67,5 +78,5 @@ async function readSheet() {
   const r = await fetch(`${url}/api/people/upload`, { method: "POST", headers: { ...auth, "Content-Type": "application/json" }, body: JSON.stringify({ people: rows }) });
   const j = await r.json().catch(() => ({}));
   if (!r.ok) { console.log(`PEOPLE upload failed (HTTP ${r.status}): ${j.message || ""}`); process.exit(1); }
-  console.log(`PEOPLE sent ${j.count} people${j.problems && j.problems.length ? `; not loaded: ${j.problems.join("; ")}` : ""}`);
+  console.log(`PEOPLE sent ${j.count} people (${rows.filter(p => p.codeHash).length} with a check-in code)${j.problems && j.problems.length ? `; not loaded: ${j.problems.join("; ")}` : ""}`);
 })().catch(e => { console.log(`PEOPLE error: ${e.message}`); process.exit(1); });

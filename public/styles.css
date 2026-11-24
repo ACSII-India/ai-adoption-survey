@@ -77,3 +77,4 @@ tr.click:hover{background:var(--soft)}
 .revrow select{width:auto}
 .revrow input{flex:1 1 220px;width:auto}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+#cc::placeholder{text-transform:none}

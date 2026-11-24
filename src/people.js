@@ -33,7 +33,9 @@ function load(rows) {
   for (const r of rows) {
     const p = {
       empId: String(r.empId || "").trim(), name: String(r.name || "").trim().slice(0, 100),
-      email: String(r.email || "").trim().toLowerCase().slice(0, 200), role: String(r.role || "").trim().slice(0, 80)
+      email: String(r.email || "").trim().toLowerCase().slice(0, 200), role: String(r.role || "").trim().slice(0, 80),
+      // Personal check-in code: only a salted fingerprint is kept here (scripts/checkin-codes.js).
+      codeSalt: String(r.codeSalt || "").slice(0, 64), codeHash: String(r.codeHash || "").slice(0, 128)
     };
     if (!p.name || !EMAIL_RE.test(p.email)) { problems.push(`${p.name || "?"}: name or email missing`); continue; }
     if (p.empId && !ID_RE.test(p.empId)) { problems.push(`${p.name}: Employee ID "${p.empId}" not valid`); continue; }
@@ -69,7 +71,18 @@ const findById = id => byId.get(normId(id)) || null;
 const findProbation = email => { const p = byEmail.get(String(email || "").trim().toLowerCase()); return p && !p.empId ? p : null; };
 const hasId = email => { const p = byEmail.get(String(email || "").trim().toLowerCase()); return !!(p && p.empId); };
 
+// Check-in codes: required as soon as any person on the list has one.
+// Codes are typed without the dash and in any case: "k7q4mx" = "K7Q-4MX".
+const normCode = c => String(c || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
+const codeFingerprint = (salt, code) => crypto.createHash("sha256").update(`${salt}:${normCode(code)}`).digest("hex");
+const requiresCode = () => list.some(p => p.codeHash);
+function codeOk(p, code) {
+  if (!p.codeHash) return false;
+  const a = Buffer.from(codeFingerprint(p.codeSalt, code)), b = Buffer.from(p.codeHash);
+  return a.length === b.length && crypto.timingSafeEqual(a, b);
+}
+
 // What the server records for this person (never what the browser sent).
 const profileOf = p => ({ name: p.name, empId: p.empId || probationId(p.email), email: p.email, teamRole: p.teamRole, qset: p.qset, probation: !p.empId });
 
-module.exports = { load: save, loaded: () => list.length > 0, status: () => ({ count: list.length, hash }), findById, findProbation, hasId, profileOf, mask };
+module.exports = { load: save, loaded: () => list.length > 0, status: () => ({ count: list.length, hash, withCode: list.filter(p => p.codeHash).length }), findById, findProbation, hasId, profileOf, mask, requiresCode, codeOk, codeFingerprint, normCode };
