@@ -61,6 +61,17 @@ try {
   if (fs.existsSync(config.peoplePath)) { const r = load(JSON.parse(fs.readFileSync(config.peoplePath, "utf8"))); console.log(`employee list loaded: ${r.count} people`); }
 } catch (e) { console.error("employee list could not be read:", e.message); }
 
+// Check-ins the surveyor deleted for good (scripts/purge-submissions.js): their
+// result links say "withdrawn" instead of waiting forever. Sent by the backup job.
+const deletedPath = config.peoplePath.replace(/\.json$/i, "") + "-deleted.json";
+let deleted = new Set();
+try { deleted = new Set(JSON.parse(fs.readFileSync(deletedPath, "utf8"))); } catch (_) {}
+function setDeleted(ids) {
+  deleted = new Set((Array.isArray(ids) ? ids : []).map(String).filter(id => /^S-[A-Z0-9]{6,12}$/.test(id)).slice(0, 5000));
+  try { fs.writeFileSync(deletedPath, JSON.stringify([...deleted]), { mode: 0o600 }); } catch (e) { console.error("deleted list not saved:", e.message); }
+}
+const addDeleted = ids => setDeleted([...deleted, ...ids]);
+
 // Masks the email for the screen: ych•••@acsi-india.org
 const mask = email => { const [u, d] = email.split("@"); return `${u.slice(0, 3)}•••@${d}`; };
 
@@ -85,4 +96,4 @@ function codeOk(p, code) {
 // What the server records for this person (never what the browser sent).
 const profileOf = p => ({ name: p.name, empId: p.empId || probationId(p.email), email: p.email, teamRole: p.teamRole, qset: p.qset, probation: !p.empId });
 
-module.exports = { load: save, loaded: () => list.length > 0, status: () => ({ count: list.length, hash, withCode: list.filter(p => p.codeHash).length }), findById, findProbation, hasId, profileOf, mask, requiresCode, codeOk, codeFingerprint, normCode };
+module.exports = { load: save, loaded: () => list.length > 0, status: () => ({ count: list.length, hash, withCode: list.filter(p => p.codeHash).length, deleted: deleted.size }), isDeleted: id => deleted.has(id), setDeleted, addDeleted, findById, findProbation, hasId, profileOf, mask, requiresCode, codeOk, codeFingerprint, normCode };

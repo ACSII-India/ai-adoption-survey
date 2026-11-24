@@ -288,6 +288,8 @@ app.get("/api/result", limiter(10, 120), async (req, res) => {
     if (b && b.status === "ready") { results.setReady(id, b.html, "workbook"); return res.json(b); }
     if (b && b.status === "pending") { const e = results.get(id); return res.json(e && e.status === "ready" && e.source === "assessment" ? { status: "ready", html: e.html } : { status: "pending" }); }
   } catch (err) { console.error("report from workbook failed:", err.message); }
+  // Deleted for good by the surveyor: same page as a withdrawn check-in (offers a fresh start).
+  if (people.isDeleted(id)) return res.json({ status: "withdrawn" });
   const e = results.get(id);
   res.json(e && e.status === "ready" ? { status: "ready", html: e.html } : { status: "pending" });
 });
@@ -334,7 +336,11 @@ function jobAuth(req, res, next) {
 // Backup job: the employee list (scripts/sync-people.js).
 app.get("/api/people/status", jobAuth, (req, res) => res.json(people.status()));
 app.post("/api/people/upload", jobAuth, express.json({ limit: "1mb" }), (req, res) => {
-  try { const r = people.load(req.body.people); console.log(`employee list updated: ${r.count} people`); res.json({ ok: true, ...r }); }
+  try {
+    const r = people.load(req.body.people);
+    if (Array.isArray(req.body.deleted)) people.setDeleted(req.body.deleted);
+    console.log(`employee list updated: ${r.count} people`); res.json({ ok: true, ...r });
+  }
   catch (e) { fail(res, 400, "bad_request", e.message); }
 });
 app.get("/api/results/ready", jobAuth, (req, res) => res.json({ ready: results.readyIds() }));
@@ -370,6 +376,7 @@ app.post("/api/results/purge", jobAuth, async (req, res) => {
     const removed = await store.purge(ids);
     if (removed === false) return fail(res, 501, "not_supported", "Deleting is only available for the local results file.");
     ids.forEach(id => results.remove(id));
+    people.addDeleted(ids);
     console.log(`purged ${ids.length} check-ins: ${ids.join(", ")}`);
     res.json({ ok: true, removed });
   } catch (e) { console.error("purge failed:", e.message); fail(res, 500, "purge_failed", "The check-ins could not be deleted."); }

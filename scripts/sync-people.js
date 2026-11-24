@@ -74,8 +74,11 @@ async function readSheet() {
   if (st.status === 404) { console.log("PEOPLE skipped: the survey does not have the employee list feature yet"); return; }
   if (!st.ok) { console.log(`PEOPLE status check failed (HTTP ${st.status})`); process.exit(1); }
   const cur = await st.json();
-  if (cur.hash === hash) { process.exitCode = 0; return; }
-  const r = await fetch(`${url}/api/people/upload`, { method: "POST", headers: { ...auth, "Content-Type": "application/json" }, body: JSON.stringify({ people: rows }) });
+  // Check-ins deleted for good (scripts/purge-submissions.js), so their links say "withdrawn".
+  let deleted = [];
+  try { deleted = fs.readFileSync(path.join(ROOT, "backup", "deleted-submissions.txt"), "utf8").split(/\s+/).filter(Boolean); } catch (_) {}
+  if (cur.hash === hash && (cur.deleted === undefined || cur.deleted === deleted.length)) { process.exitCode = 0; return; }
+  const r = await fetch(`${url}/api/people/upload`, { method: "POST", headers: { ...auth, "Content-Type": "application/json" }, body: JSON.stringify({ people: rows, deleted }) });
   const j = await r.json().catch(() => ({}));
   if (!r.ok) { console.log(`PEOPLE upload failed (HTTP ${r.status}): ${j.message || ""}`); process.exit(1); }
   console.log(`PEOPLE sent ${j.count} people (${rows.filter(p => p.codeHash).length} with a check-in code)${j.problems && j.problems.length ? `; not loaded: ${j.problems.join("; ")}` : ""}`);
