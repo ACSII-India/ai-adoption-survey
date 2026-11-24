@@ -48,7 +48,7 @@ p = doc.add_paragraph("2. "); field(p, "SignIn")
 doc.add_paragraph("3. Check your details and answer the questions.")
 doc.add_paragraph("Please keep this code to yourself: it makes sure only you can take the check-in as you. "
                   "If you lose it, message the " + owner + " on Microsoft Teams for a new one.")
-doc.add_paragraph("Thank you,\n" + owner + "\n" + sender)
+doc.add_paragraph("Thank you,\n" + owner)
 note = doc.add_paragraph()
 r = note.add_run("Set the subject in Word when sending (Finish & Merge > Send Email Messages): "
                  "\"Your code for the AI adoption check-in\". Delete this line before merging.")

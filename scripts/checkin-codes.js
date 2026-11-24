@@ -78,8 +78,7 @@ Your personal check-in code is: ${code}
 Please keep this code to yourself: it makes sure only you can take the check-in as you. If you lose it, message the ${TEAM} on Microsoft Teams for a new one.
 
 Thank you,
-${TEAM}
-${FROM}`;
+${TEAM}`;
 
 async function buildFiles(list, codes) {
   fs.mkdirSync(OUT, { recursive: true, mode: 0o700 });
