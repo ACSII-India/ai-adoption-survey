@@ -250,14 +250,48 @@
       (s.next ? `<div style="margin-top:6px"><b>Next: Level ${s.next.level} – ${esc(s.next.name)}.</b> ${s.next.have.length ? `You have ${s.next.have.map(esc).join(", ")}. ` : ""}Complete at least ${s.next.stillNeeded} of: ${list(s.next.from)}.</div>` : `<div style="margin-top:6px">You have reached the top level.</div>`) + "</div>";
   }
 
+  // "Last, First M" -> "First"
+  const firstName = n => { const s = String(n || "").trim(); const f = s.includes(",") ? s.split(",")[1].trim() : s; return f.split(/\s+/)[0] || ""; };
+  // Finish: forget this finished check-in in this browser and show a closing screen.
+  // The report stays available on the personal link.
+  function finish(el, id, r) {
+    if (!confirm("Have you saved your link or downloaded the PDF? After this, your report opens only from your saved link.")) return;
+    try { const saved = JSON.parse(localStorage.getItem(KEY) || "{}"); if (!saved.submitted || saved.submitted.submissionId === id) localStorage.removeItem(KEY); } catch (e) {}
+    const name = firstName((st.profile || {}).name);
+    st = blank(); clearInterval(pollTimer); $("chat").innerHTML = "";
+    el.innerHTML = `<div class="panel"><h2>Thank you${name ? ", " + esc(name) : ""}</h2>
+      <p style="margin:0 0 10px">Thank you for taking the AI adoption check-in. Your check-in is complete, and you can close this page.</p>
+      <p class="hint" style="margin:0">To see your report again, open the link you saved: <code style="word-break:break-all">${esc(resultLink(id, r))}</code></p>
+      <div class="row"><a class="btn" href="/">Back to the start page</a></div></div>`;
+    window.scrollTo(0, 0);
+  }
+
+  // Exit while the report is being prepared: the check-in stays saved in this
+  // browser, so coming back to the site shows its status (and later the report).
+  function exitPending(el, id, r) {
+    const name = firstName((st.profile || {}).name);
+    clearInterval(pollTimer); $("chat").innerHTML = "";
+    el.innerHTML = `<div class="panel"><h2>Thank you${name ? ", " + esc(name) : ""}</h2>
+      <p style="margin:0 0 10px">Thank you for taking the AI adoption check-in. Your check-in is submitted, and you can close this page.</p>
+      <p style="margin:0 0 10px">Your report will be ready after your examples are checked. To see it, open your link, or come back to this site in the same browser:</p>
+      <p class="hint" style="margin:0"><code style="word-break:break-all">${esc(resultLink(id, r))}</code></p>
+      <div class="row"><a class="btn" href="/">Back to my check-in</a></div></div>`;
+    window.scrollTo(0, 0);
+  }
+
   function showReport(el, html, { ready, id, r, summary }) {
     clearInterval(pollTimer);
-    el.innerHTML = `<div class="panel">${ready ? '<p class="yes" style="font-weight:600;margin:0 0 8px" role="status">Your report is ready.</p>' : ""}
+    const just = !ready && st.submitted && st.submitted.submissionId === id, name = firstName((st.profile || {}).name);
+    el.innerHTML = `<div class="panel">${ready ? '<p class="yes" style="font-weight:600;margin:0 0 8px" role="status">Your report is ready. Thank you for taking the check-in.</p>' : ""}
+      ${just ? `<p class="yes" style="font-weight:600;margin:0 0 8px" role="status">Thank you for taking the check-in${name ? ", " + esc(name) : ""}. Your report is below.</p>` : ""}
       <h2>Your AI adoption result</h2>
       ${summaryHTML(summary)}
       <div class="row" style="margin-top:0"><button class="btn" id="pdf" type="button">Download PDF</button>${cfg.allowResubmit && st.submitted ? '<button class="btn ghost" id="again" type="button">Start a new check-in</button>' : ""}</div>
       <iframe id="rep" title="Your AI adoption result" style="width:100%;min-height:900px;border:1px solid var(--rule,#d9dee5);border-radius:8px;margin-top:12px;background:#fff"></iframe>
-      ${linkRow(id, r)}</div>`;
+      ${linkRow(id, r)}
+      <p style="margin:16px 0 0">When you have saved your link or downloaded the PDF, click <b>Finish</b>.</p>
+      <div class="row"><button class="btn" id="finish" type="button">Finish</button></div></div>`;
+    $("finish").onclick = () => finish(el, id, r);
     const f = $("rep");
     f.onload = () => { try { f.style.height = (f.contentDocument.documentElement.scrollHeight + 24) + "px"; } catch (e) {} };
     f.srcdoc = html;
@@ -269,10 +303,13 @@
 
   function showPending(el, { id, r }) {
     el.innerHTML = `<div class="panel"><h2>Your check-in is submitted</h2>
-      <p style="margin:0 0 10px">Thank you. Your Level 5–7 examples are being assessed and reviewed.</p>
+      <p style="margin:0 0 10px">Thank you${firstName((st.profile || {}).name) ? ", " + esc(firstName(st.profile.name)) : ""}, for taking the check-in. Your Level 5–7 examples are being assessed and reviewed.</p>
       <p style="margin:0 0 10px"><b>Come back to this page later to see your detailed report.</b> When it is ready, this page shows <b>“Your report is ready”</b> with your report and a PDF to download.</p>
       <div class="row"><button class="btn" id="check" type="button">Check now</button></div><p class="hint" id="pmsg" role="status"></p>
-      ${linkRow(id, r)}</div>`;
+      ${linkRow(id, r)}
+      <p style="margin:16px 0 0">When you have saved your link, click <b>Exit</b>. Your check-in stays saved, and your report will be on your link.</p>
+      <div class="row"><button class="btn" id="exit" type="button">Exit</button></div></div>`;
+    $("exit").onclick = () => exitPending(el, id, r);
     $("check").onclick = () => checkResult(el, id, r, true);
     bindLink(id, r);
     clearInterval(pollTimer);
