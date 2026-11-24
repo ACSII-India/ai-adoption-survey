@@ -21,5 +21,6 @@ module.exports = {
   get: id => data[id] || null,
   setPending(id) { if (!data[id] || data[id].status !== "ready") { data[id] = { status: "pending", at: new Date().toISOString() }; save(); } },
   setReady(id, html, source) { data[id] = { status: "ready", html, source, at: new Date().toISOString() }; save(); },
+  remove(id) { if (data[id]) { delete data[id]; save(); } },
   readyIds: () => Object.keys(data).filter(id => data[id].status === "ready")
 };

@@ -153,6 +153,7 @@ class ExcelStore {
   async saveAssessment() { return false; }
   async listAssessmentEvidence() { return []; }
   async mergeFrom() { return false; }
+  async purge() { return false; }
   async download() { return this.graph.raw(`${this.item}/content`); }
   async webUrl() { return (await this.graph.get(`${this.item}?$select=webUrl`)).webUrl; }
 }
@@ -381,6 +382,24 @@ class LocalFileStore {
     });
   }
 
+  // Physically remove check-ins from every tab (Responses, Evidence,
+  // Assessment, Assessment evidence). The surveyor's purge only.
+  purge(ids) {
+    return this.serial(async () => {
+      const wb = await this.load(), gone = new Set(ids), removed = {};
+      for (const ws of wb.worksheets) {
+        const headers = (ws.getRow(1).values || []).slice(1).map(v => String(this.clean(v)));
+        const col = headers.indexOf("Submission ID") + 1;
+        if (!col) continue;
+        let n = 0;
+        for (let r = ws.rowCount; r >= 2; r--) if (gone.has(String(this.clean(ws.getRow(r).getCell(col).value)).replace(/^'/, ""))) { ws.spliceRows(r, 1); n++; }
+        removed[ws.name] = n;
+      }
+      await this.save(wb);
+      return removed;
+    });
+  }
+
   setStatus(submissionId, status, extra = {}) {
     return this.serial(async () => {
       const wb = await this.load();
@@ -436,6 +455,7 @@ class MemoryStore {
   async saveAssessment() { return false; }
   async listAssessmentEvidence() { return []; }
   async mergeFrom() { return false; }
+  async purge() { return false; }
   async download() { return null; }
   async webUrl() { return ""; }
 }

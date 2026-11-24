@@ -317,6 +317,27 @@ app.post("/api/results/upload", jobAuth, async (req, res) => {
   res.json({ ok: true, link: resultLinkFor(id), savedToWorkbook: saved });
 });
 
+// Surveyor only (RESULTS_TOKEN): permanently delete check-ins that are already
+// Inactive or Test, with their examples, assessment rows and report. The backup
+// job must also be told (backup/deleted-submissions.txt), or it restores them.
+app.post("/api/results/purge", jobAuth, async (req, res) => {
+  const ids = Array.isArray(req.body.submissionIds) ? req.body.submissionIds.map(x => str(x, 20)) : [];
+  if (!ids.length || ids.length > 50 || ids.some(id => !/^S-[A-Z0-9]{6,12}$/.test(id))) return fail(res, 400, "bad_request", "submissionIds is required.");
+  try {
+    const all = await store.listResponses();
+    for (const id of ids) {
+      const r = all.find(x => x["Submission ID"] === id);
+      if (!r) return fail(res, 404, "not_found", `${id} is not in the results.`);
+      if (!["Inactive", "Deleted", "Test"].includes(r.Status)) return fail(res, 409, "still_active", `${id} is ${r.Status}: set it to Inactive first.`);
+    }
+    const removed = await store.purge(ids);
+    if (removed === false) return fail(res, 501, "not_supported", "Deleting is only available for the local results file.");
+    ids.forEach(id => results.remove(id));
+    console.log(`purged ${ids.length} check-ins: ${ids.join(", ")}`);
+    res.json({ ok: true, removed });
+  } catch (e) { console.error("purge failed:", e.message); fail(res, 500, "purge_failed", "The check-ins could not be deleted."); }
+});
+
 // Backup job: put the results workbook back after a restart lost it. The
 // backup copy is merged with anything submitted since the restart.
 app.post("/api/results/restore-workbook", jobAuth, express.raw({ type: "application/octet-stream", limit: "10mb" }), async (req, res) => {

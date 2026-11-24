@@ -47,6 +47,8 @@ The person enters their Employee ID (people on probation without one use their w
 
 ### One check-in per person per cycle, with surveyor approval
 
+To permanently delete check-ins that are already Inactive or Test (for example old test entries), run `node scripts/purge-submissions.js S-XXXXXXXX ...`: it deletes them on the survey (all tabs and the report), lists them in `backup/deleted-submissions.txt` so the backup job never restores them, and removes the automatic job's saved reports for them. Older timestamped backup copies are not changed.
+
 A second check-in from the same Employee ID in the same cycle is blocked. The attempt itself is the request: the survey stamps `New check-in requested (UTC)` on the earlier check-in and tells the person their request has gone to the surveyor (`SURVEY_OWNER`); their answers stay on the page. The surveyor sees **New check-in requests waiting for approval** at the top of `/admin` (and the same column in the Excel file), opens the earlier check-in and chooses:
 
 - **Approve a new check-in**: status `Reopened`, `New check-in approved` = Yes. The person clicks Submit again and the new check-in counts.

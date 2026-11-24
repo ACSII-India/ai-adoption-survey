@@ -32,7 +32,10 @@ async function ids(file) {
 (async () => {
   if (!prev || !fs.existsSync(prev)) process.exit(0);
   const now = await ids(fresh), before = await ids(prev);
-  const missing = [...before].filter(id => !now.has(id));
+  // Check-ins the surveyor deleted on purpose (scripts/purge-submissions.js) are not restored.
+  let deleted = new Set();
+  try { deleted = new Set(fs.readFileSync(path.join(path.dirname(prev), "deleted-submissions.txt"), "utf8").split(/\s+/).filter(Boolean)); } catch (_) {}
+  const missing = [...before].filter(id => !now.has(id) && !deleted.has(id));
   if (!missing.length) process.exit(0);
   let token = process.env.RESULTS_TOKEN || "";
   if (!token) { try { token = fs.readFileSync(path.join(ROOT, "assessment", "auto", "results-token.txt"), "utf8").trim(); } catch (_) {} }
