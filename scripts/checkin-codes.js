@@ -28,6 +28,8 @@ const CODES = path.join(ROOT, "backup", "checkin-codes.json");
 const OUT = path.join(ROOT, "backup", "check-in codes");
 const SITE = "https://tech-adoption.onrender.com";
 const OWNER = process.env.SURVEY_OWNER || "Satish Javalekar";
+// Who signs the message and whom to contact for a lost code.
+const TEAM = process.env.CODES_TEAM || "Central Function team";
 // The mailbox the mail merge is sent from (shown under the sign-off).
 const FROM = process.env.CODES_FROM || "asktech@acsi-india.org";
 // No 0/O, 1/I/L: easy to read and type.
@@ -73,10 +75,10 @@ Your personal check-in code is: ${code}
 2. ${signIn(p)}
 3. Check your details and answer the questions.
 
-Please keep this code to yourself: it makes sure only you can take the check-in as you. If you lose it, message ${OWNER} on Microsoft Teams for a new one.
+Please keep this code to yourself: it makes sure only you can take the check-in as you. If you lose it, message the ${TEAM} on Microsoft Teams for a new one.
 
 Thank you,
-${OWNER}
+${TEAM}
 ${FROM}`;
 
 async function buildFiles(list, codes) {
@@ -109,7 +111,7 @@ async function buildFiles(list, codes) {
   await im.xlsx.writeFile(path.join(OUT, "Check-in codes - individual messages.xlsx"));
 
   // 3. The Word mail-merge letter (python-docx), with merge fields for the Excel columns above.
-  execFileSync("python3", [path.join(__dirname, "checkin-codes-docx.py"), path.join(OUT, "Check-in code email - Word mail merge.docx"), SITE, OWNER, FROM], { stdio: "inherit" });
+  execFileSync("python3", [path.join(__dirname, "checkin-codes-docx.py"), path.join(OUT, "Check-in code email - Word mail merge.docx"), SITE, TEAM, FROM], { stdio: "inherit" });
   for (const f of fs.readdirSync(OUT)) fs.chmodSync(path.join(OUT, f), 0o600);
   return rows.length;
 }
