@@ -103,7 +103,7 @@
         el.innerHTML = `<div class="panel"><p style="margin:0 0 10px">${probation ? "Enter your work email." : "Enter your Employee ID."}</p>
           <div class="grid2f"><div>${probation
             ? '<label class="f" for="lk">Work email</label><input id="lk" type="email" autocomplete="email" maxlength="200">'
-            : '<label class="f" for="lk">Employee ID</label><input id="lk" autocomplete="off" spellcheck="false" maxlength="40" placeholder="For example ACSIT-014">'}</div></div>
+            : '<label class="f" for="lk">Employee ID</label><input id="lk" autocomplete="off" spellcheck="false" maxlength="40" placeholder="For example ACSIT-000">'}</div></div>
           <p class="err" id="perr" role="alert"></p>
           <div class="row"><button class="btn" id="find" type="button">Find me</button>
           <button class="btn ghost" id="alt" type="button">${probation ? "I have an Employee ID" : "I don't have an Employee ID yet"}</button></div></div>`;
