@@ -62,7 +62,9 @@ try {
 // Masks the email for the screen: ych•••@acsi-india.org
 const mask = email => { const [u, d] = email.split("@"); return `${u.slice(0, 3)}•••@${d}`; };
 
-const findById = id => byId.get(String(id || "").trim().toUpperCase()) || null;
+// "14", "014", "ACSIT14" and "ACSIT-014" all mean ACSIT-014: a number on its own gets the ACSIT- prefix.
+const normId = id => { const v = String(id || "").trim().toUpperCase(), m = /^(?:ACSIT[-\s]?)?(\d{1,4})$/.exec(v); return m ? "ACSIT-" + m[1].padStart(3, "0") : v; };
+const findById = id => byId.get(normId(id)) || null;
 // Email lookup is only for people without an Employee ID.
 const findProbation = email => { const p = byEmail.get(String(email || "").trim().toLowerCase()); return p && !p.empId ? p : null; };
 const hasId = email => { const p = byEmail.get(String(email || "").trim().toLowerCase()); return !!(p && p.empId); };
